@@ -1,0 +1,16 @@
+{
+  "name": "gotgof",
+  "private": true,
+  "packageManager": "pnpm@9.15.4",
+  "scripts": {
+    "dev": "concurrently -n server,client -c blue,green \"pnpm dev:server\" \"pnpm dev:client\"",
+    "dev:server": "pnpm --filter gotgof-server dev",
+    "dev:client": "pnpm --filter gotgof-client dev",
+    "build": "pnpm --filter gotgof-client build && pnpm --filter gotgof-server build",
+    "db:migrate": "pnpm --filter gotgof-server db:migrate",
+    "db:seed": "pnpm --filter gotgof-server db:seed"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0"
+  }
+}

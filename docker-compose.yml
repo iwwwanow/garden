@@ -1,0 +1,37 @@
+services:
+  server:
+    image: node:20-alpine
+    working_dir: /app
+    command: sh -c "corepack enable && pnpm install && pnpm dev"
+    volumes:
+      - ./server:/app
+      - server_nm:/app/node_modules
+      - server_data:/app/data
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./server/.env
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: file:./data/gotgof.db
+    restart: unless-stopped
+
+  client:
+    image: node:20-alpine
+    working_dir: /app
+    command: sh -c "corepack enable && pnpm install && pnpm dev --host 0.0.0.0"
+    volumes:
+      - ./client:/app
+      - client_nm:/app/node_modules
+    ports:
+      - "5173:5173"
+    environment:
+      API_TARGET: http://server:3000
+    depends_on:
+      - server
+    restart: unless-stopped
+
+volumes:
+  server_nm:
+  client_nm:
+  server_data:
