@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="35%" r="75%">
+      <stop offset="0%" stop-color="#d0f5ea"/>
+      <stop offset="100%" stop-color="#8ecce0"/>
+    </radialGradient>
+    <radialGradient id="p" cx="38%" cy="25%" r="65%">
+      <stop offset="0%" stop-color="#a0fce0"/>
+      <stop offset="60%" stop-color="#2ecc71"/>
+      <stop offset="100%" stop-color="#1a9c54"/>
+    </radialGradient>
+    <radialGradient id="p2" cx="38%" cy="25%" r="65%">
+      <stop offset="0%" stop-color="#c8ffe8"/>
+      <stop offset="60%" stop-color="#40f4c1"/>
+      <stop offset="100%" stop-color="#00b48a"/>
+    </radialGradient>
+    <radialGradient id="ctr" cx="32%" cy="28%" r="60%">
+      <stop offset="0%" stop-color="#fff9c4"/>
+      <stop offset="100%" stop-color="#f9a825"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Sky background -->
+  <rect width="300" height="400" fill="url(#bg)"/>
+
+  <!-- Ground gradient -->
+  <ellipse cx="150" cy="395" rx="120" ry="18" fill="rgba(46,139,87,0.25)"/>
+
+  <!-- Stem -->
+  <path d="M150 295 Q145 350 142 400" stroke="#27ae60" stroke-width="7" fill="none"
+        stroke-linecap="round"/>
+  <!-- Leaves -->
+  <ellipse cx="132" cy="345" rx="26" ry="11" fill="#27ae60" opacity="0.85"
+           transform="rotate(-35,132,345)"/>
+  <ellipse cx="162" cy="320" rx="22" ry="9" fill="#2ecc71" opacity="0.75"
+           transform="rotate(30,162,320)"/>
+
+  <!-- Back petals (offset, darker) -->
+  <g transform="translate(150,215)">
+    <ellipse rx="26" ry="70" fill="url(#p2)" opacity="0.6" transform="rotate(30) translate(0,-62)"/>
+    <ellipse rx="26" ry="70" fill="url(#p2)" opacity="0.6" transform="rotate(90) translate(0,-62)"/>
+    <ellipse rx="26" ry="70" fill="url(#p2)" opacity="0.6" transform="rotate(150) translate(0,-62)"/>
+    <ellipse rx="26" ry="70" fill="url(#p2)" opacity="0.6" transform="rotate(210) translate(0,-62)"/>
+    <ellipse rx="26" ry="70" fill="url(#p2)" opacity="0.6" transform="rotate(270) translate(0,-62)"/>
+    <ellipse rx="26" ry="70" fill="url(#p2)" opacity="0.6" transform="rotate(330) translate(0,-62)"/>
+  </g>
+
+  <!-- Front petals -->
+  <g transform="translate(150,215)">
+    <ellipse rx="28" ry="72" fill="url(#p)" transform="rotate(0) translate(0,-60)"/>
+    <ellipse rx="28" ry="72" fill="url(#p)" transform="rotate(60) translate(0,-60)"/>
+    <ellipse rx="28" ry="72" fill="url(#p)" transform="rotate(120) translate(0,-60)"/>
+    <ellipse rx="28" ry="72" fill="url(#p)" transform="rotate(180) translate(0,-60)"/>
+    <ellipse rx="28" ry="72" fill="url(#p)" transform="rotate(240) translate(0,-60)"/>
+    <ellipse rx="28" ry="72" fill="url(#p)" transform="rotate(300) translate(0,-60)"/>
+
+    <!-- Center -->
+    <circle r="30" fill="url(#ctr)"/>
+    <!-- Pollen dots -->
+    <circle cx="0" cy="0" r="4" fill="#f0a500" opacity="0.6"/>
+    <circle cx="8" cy="-6" r="3" fill="#f0a500" opacity="0.5"/>
+    <circle cx="-7" cy="5" r="3" fill="#f0a500" opacity="0.5"/>
+
+    <!-- Specular highlight -->
+    <ellipse cx="-8" cy="-11" rx="13" ry="9" fill="rgba(255,255,255,0.55)"/>
+  </g>
+
+  <!-- Dew drops on petals -->
+  <circle cx="115" cy="165" r="4" fill="rgba(255,255,255,0.7)"/>
+  <circle cx="118" cy="163" r="2" fill="white"/>
+  <circle cx="188" cy="158" r="3" fill="rgba(255,255,255,0.65)"/>
+  <circle cx="190" cy="157" r="1.5" fill="white"/>
+</svg>

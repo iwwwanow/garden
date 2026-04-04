@@ -10,7 +10,7 @@
   // Mock data for another user's flower
   const data = {
     ownerName: 'Marie Curie',
-    imageUrl: 'https://placehold.co/400x480/c5e8f0/0078d7',
+    imageUrl: '/flowers/mint.svg',
     fdEarned: 10,
     day: 3,
     plantedAt: '28.02.2026',

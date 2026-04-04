@@ -3,6 +3,8 @@
   import AeroBackground from './lib/components/AeroBackground.svelte';
   import TabBar from './lib/components/TabBar.svelte';
   import GardenPage from './pages/GardenPage.svelte';
+  import SeedsPage from './pages/SeedsPage.svelte';
+  import HerbariumPage from './pages/HerbariumPage.svelte';
   import FeedPage from './pages/FeedPage.svelte';
   import LeaderboardPage from './pages/LeaderboardPage.svelte';
   import SeedDetailPage from './pages/SeedDetailPage.svelte';
@@ -10,7 +12,7 @@
   import FlowerDetailPage from './pages/FlowerDetailPage.svelte';
 
   $: current = $pageStack[$pageStack.length - 1];
-  $: isTab = ['garden', 'feed', 'leaderboard'].includes(current.name);
+  $: isTab = ['garden', 'seeds', 'herbarium', 'feed', 'leaderboard'].includes(current.name);
 </script>
 
 <AeroBackground />
@@ -19,6 +21,10 @@
   <div class="content">
     {#if current.name === 'garden'}
       <GardenPage />
+    {:else if current.name === 'seeds'}
+      <SeedsPage />
+    {:else if current.name === 'herbarium'}
+      <HerbariumPage />
     {:else if current.name === 'feed'}
       <FeedPage />
     {:else if current.name === 'leaderboard'}

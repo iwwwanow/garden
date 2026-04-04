@@ -14,8 +14,8 @@
       waterings: 1240,
       requestsWatering: true,
       flowers: [
-        { id: 1, imageUrl: 'https://placehold.co/84x84/a8d8ea/4da6ff', fdAmount: '10FD' },
-        { id: 2, imageUrl: 'https://placehold.co/84x84/c5e8f0/0078d7', fdAmount: '5FD' },
+        { id: 1, imageUrl: '/flowers/mint.svg',   fdAmount: '+8 FD' },
+        { id: 2, imageUrl: '/flowers/blue.svg',   fdAmount: '+4 FD' },
       ],
     },
     {
@@ -26,8 +26,8 @@
       waterings: 630,
       requestsWatering: false,
       flowers: [
-        { id: 3, imageUrl: 'https://placehold.co/84x84/d4f1e8/2ecc71', fdAmount: '5FD' },
-        { id: 4, imageUrl: 'https://placehold.co/84x84/b8dff0/40f4c1', fdAmount: '10FD' },
+        { id: 3, imageUrl: '/flowers/violet.svg', fdAmount: '+16 FD' },
+        { id: 4, imageUrl: '/flowers/pink.svg',   fdAmount: '+8 FD'  },
       ],
     },
     {
@@ -38,8 +38,8 @@
       waterings: 3102,
       requestsWatering: true,
       flowers: [
-        { id: 5, imageUrl: 'https://placehold.co/84x84/ffe4b5/d4a017', fdAmount: '32FD' },
-        { id: 6, imageUrl: 'https://placehold.co/84x84/f0d4e8/a020f0', fdAmount: '8FD' },
+        { id: 5, imageUrl: '/flowers/amber.svg',  fdAmount: '+32 FD' },
+        { id: 6, imageUrl: '/flowers/pink.svg',   fdAmount: '+64 FD' },
       ],
     },
   ];

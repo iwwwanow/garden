@@ -1,7 +1,10 @@
 <script lang="ts">
-  import { switchTab, type TabName } from '../router';
+  import { switchTab, type TabName, gardenTabs } from '../router';
 
   export let activeTab: string;
+
+  // All garden sub-screens count as «Сад» being active
+  $: activeMain = (gardenTabs as readonly string[]).includes(activeTab) ? 'garden' : activeTab;
 
   const tabs: { id: TabName; label: string; icon: string }[] = [
     { id: 'garden',      label: 'Сад',     icon: '🌸' },
@@ -16,7 +19,7 @@
     {#each tabs as tab}
       <button
         class="item"
-        class:active={activeTab === tab.id}
+        class:active={activeMain === tab.id}
         on:click={() => switchTab(tab.id)}
       >
         {#if activeTab === tab.id}

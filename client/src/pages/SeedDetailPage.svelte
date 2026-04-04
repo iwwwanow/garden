@@ -8,8 +8,8 @@
 
   // Mock seed data
   const seed = {
-    imageUrl: `https://placehold.co/400x480/a8d8ea/4da6ff`,
-    fdAmount: '10FD',
+    imageUrl: `/flowers/blue.svg`,
+    fdAmount: '+5 FD/день',
     acquiredAt: '28.02.2026',
     fromUser: '@iwwwanow',
   };

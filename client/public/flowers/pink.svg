@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="32%" r="75%">
+      <stop offset="0%" stop-color="#ffe0f0"/>
+      <stop offset="100%" stop-color="#f0b8d0"/>
+    </radialGradient>
+    <radialGradient id="p" cx="35%" cy="22%" r="65%">
+      <stop offset="0%" stop-color="#ffb0d8"/>
+      <stop offset="55%" stop-color="#e91e8c"/>
+      <stop offset="100%" stop-color="#9c1060"/>
+    </radialGradient>
+    <radialGradient id="p2" cx="35%" cy="22%" r="65%">
+      <stop offset="0%" stop-color="#ffd0e8"/>
+      <stop offset="55%" stop-color="#f06090"/>
+      <stop offset="100%" stop-color="#c0407a"/>
+    </radialGradient>
+    <radialGradient id="ctr" cx="30%" cy="28%" r="58%">
+      <stop offset="0%" stop-color="#fffde0"/>
+      <stop offset="100%" stop-color="#ffd600"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="300" height="400" fill="url(#bg)"/>
+  <ellipse cx="150" cy="396" rx="115" ry="17" fill="rgba(160,40,100,0.15)"/>
+
+  <!-- Stem -->
+  <path d="M150 295 Q147 350 144 400" stroke="#c06080" stroke-width="6" fill="none"
+        stroke-linecap="round"/>
+  <!-- Leaves -->
+  <ellipse cx="135" cy="344" rx="25" ry="10" fill="#e8609a" opacity="0.75"
+           transform="rotate(-35,135,344)"/>
+  <ellipse cx="162" cy="320" rx="21" ry="9" fill="#c06080" opacity="0.6"
+           transform="rotate(32,162,320)"/>
+
+  <!-- Rose-style overlapping petals -->
+  <!-- Back layer -->
+  <g transform="translate(150,210)">
+    <ellipse rx="35" ry="58" fill="url(#p2)" opacity="0.5" transform="rotate(20) translate(0,-50)"/>
+    <ellipse rx="35" ry="58" fill="url(#p2)" opacity="0.5" transform="rotate(80) translate(0,-50)"/>
+    <ellipse rx="35" ry="58" fill="url(#p2)" opacity="0.5" transform="rotate(140) translate(0,-50)"/>
+    <ellipse rx="35" ry="58" fill="url(#p2)" opacity="0.5" transform="rotate(200) translate(0,-50)"/>
+    <ellipse rx="35" ry="58" fill="url(#p2)" opacity="0.5" transform="rotate(260) translate(0,-50)"/>
+    <ellipse rx="35" ry="58" fill="url(#p2)" opacity="0.5" transform="rotate(320) translate(0,-50)"/>
+  </g>
+
+  <!-- Front petals (8, denser, rose feel) -->
+  <g transform="translate(150,210)">
+    <ellipse rx="30" ry="62" fill="url(#p)" transform="rotate(0) translate(0,-52)"/>
+    <ellipse rx="30" ry="62" fill="url(#p)" transform="rotate(45) translate(0,-52)"/>
+    <ellipse rx="30" ry="62" fill="url(#p)" transform="rotate(90) translate(0,-52)"/>
+    <ellipse rx="30" ry="62" fill="url(#p)" transform="rotate(135) translate(0,-52)"/>
+    <ellipse rx="30" ry="62" fill="url(#p)" transform="rotate(180) translate(0,-52)"/>
+    <ellipse rx="30" ry="62" fill="url(#p)" transform="rotate(225) translate(0,-52)"/>
+    <ellipse rx="30" ry="62" fill="url(#p)" transform="rotate(270) translate(0,-52)"/>
+    <ellipse rx="30" ry="62" fill="url(#p)" transform="rotate(315) translate(0,-52)"/>
+
+    <!-- Center -->
+    <circle r="24" fill="url(#ctr)"/>
+    <ellipse cx="-6" cy="-8" rx="10" ry="7" fill="rgba(255,255,255,0.55)"/>
+  </g>
+
+  <!-- Dew drops -->
+  <circle cx="108" cy="160" r="5" fill="rgba(255,255,255,0.7)"/>
+  <circle cx="110" cy="158" r="2.5" fill="white"/>
+  <circle cx="190" cy="152" r="3.5" fill="rgba(255,255,255,0.6)"/>
+  <circle cx="191" cy="151" r="1.5" fill="white"/>
+</svg>

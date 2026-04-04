@@ -7,7 +7,7 @@
 
   // Mock dried flower data
   const flower = {
-    imageUrl: `https://placehold.co/400x480/adadad/4f4f4f`,
+    imageUrl: `/flowers/amber.svg`,
     totalFd: 2500,
     plantedAt: '28.02.2026',
     diedAt: '29.03.2026',
