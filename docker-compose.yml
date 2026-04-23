@@ -1,23 +1,42 @@
 services:
+  postgres:
+    image: postgres:17.9
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-garden}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-garden}
+      POSTGRES_DB: ${POSTGRES_DB:-garden}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-garden}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   server:
-    image: node:20-alpine
+    image: golang:1.26.2-bookworm
     working_dir: /app
-    command: sh -c "corepack enable && pnpm install && pnpm dev"
+    command: sh -c "go install github.com/air-verse/air@v1.62.0 && air"
     volumes:
       - ./server:/app
-      - server_nm:/app/node_modules
-      - server_data:/app/data
+      - go_cache:/root/.cache/go-build
+      - go_mod:/go/pkg/mod
     ports:
-      - "3000:3000"
+      - "8080:8080"
     env_file:
-      - ./server/.env
+      - .env.example
     environment:
-      NODE_ENV: development
-      DATABASE_URL: file:./data/gotgof.db
+      DATABASE_URL: postgres://${POSTGRES_USER:-garden}:${POSTGRES_PASSWORD:-garden}@postgres:5432/${POSTGRES_DB:-garden}?sslmode=disable
+    depends_on:
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
 
   client:
-    image: node:20-alpine
+    image: node:22.16.0-alpine3.22
     working_dir: /app
     command: sh -c "corepack enable && pnpm install && pnpm dev --host 0.0.0.0"
     volumes:
@@ -26,12 +45,13 @@ services:
     ports:
       - "5173:5173"
     environment:
-      API_TARGET: http://server:3000
+      VITE_API_URL: http://server:8080
     depends_on:
       - server
     restart: unless-stopped
 
 volumes:
-  server_nm:
+  postgres_data:
+  go_cache:
+  go_mod:
   client_nm:
-  server_data:
