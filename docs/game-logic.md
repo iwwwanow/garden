@@ -158,6 +158,15 @@ FD(day) = day
 
 ---
 
-## Открытые вопросы
+## Клиенты
 
-- [ ] Стек 3D-клиента (отдельный разговор)
+### Web-app / TMA
+- Svelte + Vite + TypeScript
+- UI-kit: `iwwwanow.github.io/ui-kit/`
+- Telegram Mini App (опционально)
+
+### 3D-клиент
+- Zig + raylib + Sciter
+- Desktop (native) + Web (WASM, без Sciter — DOM overlay)
+- Фаза 0: куб, сеть, UI-оверлей — детали в `docs/agents/3d-client-planning.md`
+- Долгосрочно: платформа для создания собственных игр
