@@ -4,105 +4,102 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**garden-of-the-goddess-of-flowers** — a PyTorch-based generative AI project for synthesizing flower images, intended to back a social/game application where users grow virtual flowers over 7 days.
+**Garden of the Goddess of Flowers** — social web game + Telegram Mini App where users grow virtual flowers.
+Players water flowers daily, earn FD (Flowering Days) currency, collect seeds, and visit each other's gardens.
+
+Full game logic: `docs/game-logic.md`  
+Development plan: `docs/planning.md`
 
 ## Project Structure
 
 ```
-client/          # Telegram Mini App — Vite + React + TypeScript
-server/          # Express API — Node.js + TypeScript + SQLite
-flower-generator/ # Python flower image generator (PyTorch)
-docs/dev.md      # Full development TODO list
+server/       # Go REST API
+client/       # SvelteKit web app + Telegram Mini App
+client-3d/    # Zig + raylib + Sciter 3D client
+docs/         # game logic, planning, agent plans
 ```
+
+## Stack
+
+| Service   | Stack                                          |
+|-----------|------------------------------------------------|
+| server    | Go, chi, pgx, goose, golang-jwt, air (hot-reload) |
+| client    | SvelteKit + TypeScript + pnpm, ui-kit          |
+| client-3d | Zig 0.13.0 + raylib 5.x + Sciter               |
+| database  | PostgreSQL                                     |
+
+## Versioning Rules
+
+**Always pin exact versions everywhere — no `latest`, no `^`, no `~`.**
+
+- Dockerfile base images: `golang:1.24.2-alpine`, `postgres:17.4`, etc.
+- docker-compose service images: same — exact tag
+- Go modules: exact versions in `go.mod` (default behaviour)
+- pnpm packages: exact versions — `.npmrc` contains `save-exact=true`
+- Always use the latest stable version available at the time of writing, then pin it
 
 ## Common Commands
 
 ```bash
-# Server (dev)
-cd server && npm run dev
+# Start everything (dev)
+make dev
 
-# Client (dev)
-cd client && npm run dev
+# Go server (hot-reload via air)
+cd server && air
+
+# SvelteKit client
+cd client && pnpm dev
 
 # DB migrations
-cd server && npm run db:migrate
-
-# Generate a new season flower (run once per season)
-source venv/bin/activate
-python3 -c "..." # see flower-generator/src/generate.py, copy result to server/assets/flowers/season-N.png
+cd server && goose up
 ```
 
-## Python flower generator
+## Go Server Architecture (`server/`)
 
-```bash
-python3 -m venv venv && source venv/bin/activate
-pip install torch torchvision matplotlib pillow --index-url https://download.pytorch.org/whl/cpu
-python3 flower-generator/src/train.py   # train model (~30-60 min CPU)
-python3 flower-generator/src/monitor.py # watch training progress
-bash scripts/run-all.sh                  # train + monitor together
+```
+cmd/server/       # main.go — entry point
+internal/
+  handler/        # HTTP handlers (chi router)
+  service/        # business logic
+  repo/           # database queries (pgx, raw SQL)
+  model/          # domain types
+migrations/       # SQL migration files (goose)
 ```
 
-## Server Architecture (`server/src/`)
+- Auth: `POST /auth/register`, `POST /auth/login` → JWT (30d)
+- All other routes require `Authorization: Bearer <token>`
+- Daily tick: cron at midnight — dries unwatered flowers, awards FD, gives seeds, writes notifications
 
-- `index.ts` — Express app, CORS, static assets (`/assets`), midnight cron scheduler
-- `routes/auth.ts` — `POST /auth`: verifies Telegram `initData` via HMAC-SHA256, creates user + assigns flower, returns JWT
-- `routes/me.ts` — `GET /me`: current user + flower state + seeds
-- `routes/flowers.ts` — `POST /flowers/:id/water`, `GET /flowers/user/:userId`
-- `routes/leaderboard.ts` — `GET /leaderboard`: top 50 by FD balance
-- `routes/seeds.ts` — `GET /seeds`, `POST /seeds/share`
-- `db/schema.ts` — drizzle schema: `users`, `flowers`, `user_flowers`, `waterings`, `seeds`
-- `cron/dailyTick.ts` — runs at midnight: dries unwatered flowers, awards `2^(day-1)` FD, gives seeds on day 7
-- `lib/game.ts` — FD formula (`2^(day-1)`), prime seed sequence, date utils
-- `lib/telegram.ts` — `verifyTelegramInitData()` HMAC check
-- `assets/flowers/` — season flower PNGs (`season-1.png`, etc.)
+## SvelteKit Client Architecture (`client/`)
 
-Auth flow: client sends `Telegram.WebApp.initData` → server verifies HMAC → returns JWT → client stores in localStorage.
-
-## Client Architecture (`client/src/`)
-
-- `App.tsx` — init Telegram SDK, auth on mount, tabbar navigation (Home / Leaderboard / Profile)
-- `api.ts` — typed fetch wrapper, token management
-- `pages/HomePage.tsx` — flower image (grayscale if dried), day counter, FD balance, water button
-- `pages/LeaderboardPage.tsx` — top users list
-- `pages/ProfilePage.tsx` — user info, seeds, herbarium (dried flowers)
-
-Vite proxies `/api/*` → `localhost:3000` in dev.
-
-## Flower Assets
-
-Current season flower: `server/assets/flowers/season-1.png` (generated by Python model).
-To generate a new season flower, use `flower_generator.pth` with this architecture:
-```python
-nn.Linear(100, 256) → ReLU → nn.Linear(256, 512) → ReLU → nn.Linear(512, 12288) → Tanh → reshape (3, 64, 64)
 ```
-Both saved models (`generator.pth`, `flower_generator.pth`) use FC architecture, not the ConvTranspose one in `model.py`.
+src/
+  routes/         # file-based routing
+  lib/
+    api.ts        # typed fetch wrapper, JWT management
+    components/   # UI components (from ui-kit + custom)
+```
 
-## Python Flower Generator
-- `Generator`: `nn.Sequential` using `ConvTranspose2d` layers to upsample from 4×4 → 64×64 RGB images. Input latent dim = 100. Output normalized to `[-1, 1]` via `Tanh`.
+- UI-kit: `iwwwanow.github.io/ui-kit/` — use as primary component source
+- Missing components: add new ones consistent with existing kit (tokens, style, behaviour)
+- TMA: `@twa-dev/sdk` — optional Telegram integration
+- API proxy: `/api/*` → `localhost:8080` in dev (vite config)
 
-### Training (`flower-generator/src/train.py`)
-- Config: `image_size=64`, `batch_size=64`, `lr=0.0002`, `epochs=50`, `latent_dim=100`
-- Loss: `L1Loss` (not adversarial — generator-only training against real images)
-- LR scheduler: `ReduceLROnPlateau`
-- Saves checkpoints every 10 epochs; sample images saved to `flower-generator/outputs/train_samples/`
-- Data: `torchvision.ImageFolder` from `flower-generator/data/flowers/`
+## 3D Client (`client-3d/`)
 
-### Dataset (`flower-generator/src/dataset.py`)
-- `FlowerDataset`: custom `Dataset` loading `.png/.jpg/.jpeg` files, resized to 16×16, normalized with mean/std `[0.5, 0.5, 0.5]`
+- Zig 0.13.0 + raylib 5.x + Sciter (C API via `@cImport`)
+- Desktop native + WASM (Sciter replaced by DOM overlay in WASM build)
+- Phase 0 plan: `docs/agents/3d-client-planning.md`
 
-### Inference (`flower-generator/src/generate.py`)
-- Loads `generator.pth`, samples random noise, denormalizes `[-1,1] → [0,1]`, saves as PNG
+## Database Schema
 
-### Monitoring (`flower-generator/src/monitor.py`)
-- Watches `flower-generator/outputs/train_samples/`, rebuilds animated GIF every 30 seconds
+Tables: `users`, `flowers`, `user_flowers`, `waterings`, `seeds`, `notifications`  
+Details: `docs/game-logic.md`
 
-## Data & Models
+## Game Rules (summary)
 
-- Training data: `flower-generator/data/flowers/` (9 flower-type subdirectories)
-- Test data: `flower-generator/test-data/sunflower/` (gitignored)
-- Pre-trained weights: `flower_generator.pth` (25.8 MB) and `generator.pth` (2.2 MB) — untracked, stored locally
-- Large files (`.jpg`, `.tgz`, `.zip`) use Git LFS
-
-## Business Logic (`.dev/main.md`)
-
-Core game mechanic: one flower grows over 7 days with one watering per day. Seed generation follows a prime number sequence (3, 7, 11, …). Currency = "Flowering Days" (FD), earned exponentially (1, 2, 4, 8, … per day). Export formats planned: PNG, GIF, OBJ (3D).
+- FD formula: `FD(day) = day` (linear, infinite growth)
+- Flower dies if not watered by anyone in a day
+- One watering per flower per user per day; unlimited flowers can be watered per day
+- Seeds: +1 every 7 days per flower
+- Max 64 active flowers per user
