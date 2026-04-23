@@ -1,0 +1,8 @@
+.{
+    .name = .garden3d,
+    .fingerprint = 0x48906db7da81b9f3,
+    .version = "0.0.1",
+    .minimum_zig_version = "0.14.0",
+    .dependencies = .{},
+    .paths = .{"."},
+}
