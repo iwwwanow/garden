@@ -12,9 +12,10 @@
 - [ ] Удалить старый `server/` (Node/Express/Drizzle)
 - [ ] Удалить старый `client/` (React/Svelte — всё)
 - [ ] Создать `server/` — Go-модуль (`go mod init`)
-- [ ] Создать `client/` — Svelte + Vite + TypeScript (`npm create vite`)
+- [ ] Создать `client/` — SvelteKit + TypeScript (`pnpm create svelte`)
 - [ ] Создать `client-3d/` — Zig-проект со структурой из `docs/agents/3d-client-planning.md`
-- [ ] `docker-compose.yml` — PostgreSQL, Go-сервер, Svelte-клиент (с hot-reload в dev)
+- [ ] `docker-compose.yml` — PostgreSQL, Go-сервер, SvelteKit-клиент
+- [ ] Hot-reload: Go → `air`; SvelteKit → встроенный Vite HMR
 - [ ] `.env.example` — DATABASE_URL, JWT_SECRET, PORT
 - [ ] Один `make dev` поднимает всё
 
@@ -76,7 +77,9 @@
 
 **Цель:** полностью рабочий web-app / TMA.
 
-**Стек:** Svelte 5 + Vite + TypeScript + ui-kit (`iwwwanow.github.io/ui-kit/`)
+**Стек:** SvelteKit + TypeScript + ui-kit (`iwwwanow.github.io/ui-kit/`)
+
+**UI-kit:** использовать компоненты из кита как основу. Если нужного компонента нет — добавлять новый, консистентный с уже существующими (токены, стиль, поведение).
 
 ### Экраны (уточняются при наличии набросков)
 
@@ -91,12 +94,12 @@
 
 ### Задачи
 
-- [ ] Scaffold: Svelte 5 + TypeScript + Vite
-- [ ] Подключить ui-kit
-- [ ] `api.ts` — типизированный fetch-wrapper с JWT
-- [ ] Роутинг (`svelte-routing` или file-based)
+- [ ] Scaffold: SvelteKit + TypeScript (`pnpm create svelte`)
+- [ ] Подключить ui-kit (`iwwwanow.github.io/ui-kit/`)
+- [ ] `src/lib/api.ts` — типизированный fetch-wrapper с JWT
+- [ ] Роутинг — file-based (`src/routes/`)
 - [ ] TMA: инициализация `@twa-dev/sdk`, опциональная привязка Telegram
-- [ ] Деплой: Docker, статика через nginx или `vite preview`
+- [ ] Деплой: Docker, SvelteKit adapter-node
 
 ---
 
