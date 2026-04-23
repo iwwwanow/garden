@@ -1,27 +1,30 @@
-# Python
-.local
-venv/
-*__pycache__/
-*test-data
-*.pth
-flower-generator/outputs/
+# Go
+server/tmp/
+server/bin/
 
-# Node
+# Node / pnpm
 node_modules/
-dist/
-client/dist/
-pnpm-lock.yaml
 .pnpm-store/
+pnpm-lock.yaml
+.npmrc
 
-# DB & data
-server/data/
-*.db
-*.db-shm
-*.db-wal
+# SvelteKit
+client/.svelte-kit/
+client/build/
+client/.env
+
+# Zig
+client-3d/zig-out/
+client-3d/.zig-cache/
 
 # Env
 .env
 !.env.example
+
+# DB
+*.db
+*.db-shm
+*.db-wal
 
 # OS
 .DS_Store
