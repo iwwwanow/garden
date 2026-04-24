@@ -33,8 +33,8 @@
 - [x] PostgreSQL: pgx v5.9.2 (без ORM, сырые запросы)
 - [x] Миграции: goose v3.27.0, SQL-файлы в `migrations/`
 - [x] Конфиг: `config/config.go`, читает из `.env` / env vars
-- [ ] DB-пул: инициализация `pgxpool` в `main.go`, передача в handlers
-- [ ] JWT middleware: `internal/middleware/auth.go`
+- [x] DB-пул: инициализация `pgxpool` в `main.go`, передача в handlers
+- [x] JWT middleware: `internal/middleware/auth.go`
 
 ### 1.2 Схема БД ✅
 
@@ -45,16 +45,16 @@
 
 | Метод | Путь                     | Реализован | Тесты |
 |-------|--------------------------|-----------|-------|
-| POST  | /api/auth/register       | [ ]       | [ ]   |
-| POST  | /api/auth/login          | [ ]       | [ ]   |
-| GET   | /api/me                  | [ ]       | [ ]   |
-| POST  | /api/flowers/:id/water   | [ ]       | [ ]   |
-| GET   | /api/flowers/user/:id    | [ ]       | [ ]   |
-| POST  | /api/flowers/plant       | [ ]       | [ ]   |
-| GET   | /api/leaderboard         | [ ]       | [ ]   |
-| GET   | /api/seeds               | [ ]       | [ ]   |
-| POST  | /api/seeds/share         | [ ]       | [ ]   |
-| GET   | /api/notifications       | [ ]       | [ ]   |
+| POST  | /api/auth/register       | [x]       | [ ]   |
+| POST  | /api/auth/login          | [x]       | [ ]   |
+| GET   | /api/me                  | [x]       | [ ]   |
+| POST  | /api/flowers/:id/water   | [x]       | [ ]   |
+| GET   | /api/flowers/user/:id    | [x]       | [ ]   |
+| POST  | /api/flowers/plant       | [x]       | [ ]   |
+| GET   | /api/leaderboard         | [x]       | [ ]   |
+| GET   | /api/seeds               | [x]       | [ ]   |
+| POST  | /api/seeds/share         | [x]       | [ ]   |
+| GET   | /api/notifications       | [x]       | [ ]   |
 
 ### 1.4 Dev-эндпоинты (только при `APP_ENV=development`)
 
@@ -65,11 +65,11 @@
 
 ### 1.5 Бизнес-логика
 
-- [ ] Репозиторный слой (`internal/repo/`) — CRUD для каждой таблицы
-- [ ] Сервисный слой (`internal/service/`) — бизнес-правила, изолирован от БД
-- [ ] Ежедневный тик: cron-планировщик, проверка поливов, начисление FD, семена, уведомления
-- [ ] Лимит 64 активных цветков на пользователя
-- [ ] Один полив на цветок в день от одного пользователя (UNIQUE constraint + проверка)
+- [x] Репозиторный слой (`internal/repo/`) — CRUD для каждой таблицы
+- [x] Сервисный слой (`internal/service/`) — бизнес-правила, изолирован от БД
+- [x] Ежедневный тик: cron-планировщик, проверка поливов, начисление FD, семена, уведомления
+- [x] Лимит 64 активных цветков на пользователя
+- [x] Один полив на цветок в день от одного пользователя (UNIQUE constraint + проверка)
 
 ### 1.6 Тестирование
 
