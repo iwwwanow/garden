@@ -4,25 +4,77 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
+	chimw "github.com/go-chi/chi/v5/middleware"
 	"github.com/iwwwanow/garden/server/config"
+	mw "github.com/iwwwanow/garden/server/internal/middleware"
+	"github.com/iwwwanow/garden/server/internal/repo"
+	"github.com/iwwwanow/garden/server/internal/service"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func NewRouter(cfg *config.Config) http.Handler {
-	r := chi.NewRouter()
+func NewRouter(cfg *config.Config, pool *pgxpool.Pool) http.Handler {
+	// repos
+	users := repo.NewUserRepo(pool)
+	flowers := repo.NewFlowerRepo(pool)
+	userFlowers := repo.NewUserFlowerRepo(pool)
+	waterings := repo.NewWateringRepo(pool)
+	seeds := repo.NewSeedRepo(pool)
+	notifications := repo.NewNotificationRepo(pool)
 
-	r.Use(middleware.Logger)
-	r.Use(middleware.Recoverer)
-	r.Use(middleware.RequestID)
+	// services
+	authSvc := service.NewAuthService(users, cfg.JWTSecret)
+	flowerSvc := service.NewFlowerService(userFlowers, waterings, seeds, flowers, notifications)
+	seedSvc := service.NewSeedService(seeds, users, notifications)
+	notifSvc := service.NewNotificationService(notifications)
+	tickSvc := service.NewTickService(userFlowers, waterings, users, seeds, notifications)
+
+	// handlers
+	authH := NewAuthHandler(authSvc)
+	meH := NewMeHandler(users, flowerSvc, seedSvc)
+	flowerH := NewFlowerHandler(flowerSvc)
+	seedH := NewSeedHandler(seedSvc)
+	notifH := NewNotificationHandler(notifSvc)
+	lbH := NewLeaderboardHandler(users)
+	devH := NewDevHandler(tickSvc, users)
+
+	r := chi.NewRouter()
+	r.Use(chimw.Logger)
+	r.Use(chimw.Recoverer)
+	r.Use(chimw.RequestID)
 
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"status":"ok"}`))
+		writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 	})
 
-	// TODO: mount route groups
-	// r.Mount("/api/auth", authHandler.Routes())
-	// r.Mount("/api", apiRoutes(cfg))
+	// auth (public)
+	r.Post("/api/auth/register", authH.Register)
+	r.Post("/api/auth/login", authH.Login)
+
+	// protected routes
+	r.Group(func(r chi.Router) {
+		r.Use(mw.Auth(cfg.JWTSecret))
+
+		r.Get("/api/me", meH.Me)
+		r.Get("/api/leaderboard", lbH.Leaderboard)
+
+		r.Post("/api/flowers/plant", flowerH.Plant)
+		r.Post("/api/flowers/{id}/water", flowerH.Water)
+		r.Get("/api/flowers/user/{userId}", flowerH.GetUserFlowers)
+
+		r.Get("/api/seeds", seedH.GetSeeds)
+		r.Post("/api/seeds/share", seedH.Share)
+
+		r.Get("/api/notifications", notifH.List)
+	})
+
+	// dev endpoints (only in development)
+	if cfg.AppEnv == "development" {
+		r.Group(func(r chi.Router) {
+			r.Use(mw.Auth(cfg.JWTSecret))
+			r.Post("/api/dev/tick", devH.Tick)
+			r.Get("/api/dev/users", devH.Users)
+		})
+	}
 
 	return r
 }
