@@ -1,3 +1,7 @@
+# Local
+
+docs/local/
+
 # Go
 server/tmp/
 server/bin/
