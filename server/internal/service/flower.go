@@ -54,7 +54,7 @@ func (s *flowerService) Water(ctx context.Context, userFlowerID, wateredByUserID
 	}
 
 	today := time.Now().UTC().Truncate(24 * time.Hour)
-	already, err := s.waterings.HasWatered(ctx, userFlowerID, wateredByUserID, today)
+	already, err := s.waterings.AnyOnDate(ctx, userFlowerID, today)
 	if err != nil {
 		return err
 	}

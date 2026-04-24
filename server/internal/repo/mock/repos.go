@@ -223,8 +223,9 @@ type wateringRecord struct {
 func NewWateringRepo() *WateringRepo { return &WateringRepo{} }
 
 func (r *WateringRepo) Record(_ context.Context, userFlowerID, wateredByUserID int, date time.Time) error {
+	// unique per (user_flower_id, date) — one watering per flower per day
 	for _, w := range r.records {
-		if w.userFlowerID == userFlowerID && w.wateredByUserID == wateredByUserID && w.date.Equal(date) {
+		if w.userFlowerID == userFlowerID && w.date.Equal(date) {
 			return &pgconn.PgError{Code: "23505"}
 		}
 	}

@@ -35,7 +35,7 @@ func NewRouter(cfg *config.Config, pool *pgxpool.Pool) http.Handler {
 	seedH := NewSeedHandler(seedSvc)
 	notifH := NewNotificationHandler(notifSvc)
 	lbH := NewLeaderboardHandler(users)
-	devH := NewDevHandler(tickSvc, users)
+	devH := NewDevHandler(tickSvc, users, seeds, pool)
 
 	r := chi.NewRouter()
 	r.Use(chimw.Logger)
@@ -73,6 +73,8 @@ func NewRouter(cfg *config.Config, pool *pgxpool.Pool) http.Handler {
 			r.Use(mw.Auth(cfg.JWTSecret))
 			r.Post("/api/dev/tick", devH.Tick)
 			r.Get("/api/dev/users", devH.Users)
+			r.Post("/api/dev/seeds", devH.Seeds)
+			r.Post("/api/dev/reset", devH.Reset)
 		})
 	}
 

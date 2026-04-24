@@ -11,11 +11,13 @@ import (
 
 	"github.com/iwwwanow/garden/server/config"
 	"github.com/iwwwanow/garden/server/internal/handler"
-	"github.com/iwwwanow/garden/server/internal/service"
 	"github.com/iwwwanow/garden/server/internal/repo"
+	"github.com/iwwwanow/garden/server/internal/service"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	_ "github.com/jackc/pgx/v5/stdlib" // register pgx driver for database/sql (goose)
 	"github.com/joho/godotenv"
+	"github.com/pressly/goose/v3"
 )
 
 func main() {
@@ -24,6 +26,11 @@ func main() {
 	}
 
 	cfg := config.Load()
+
+	// Run migrations before opening the pool
+	if err := runMigrations(cfg.DatabaseURL); err != nil {
+		log.Fatalf("migrations: %v", err)
+	}
 
 	pool, err := pgxpool.New(context.Background(), cfg.DatabaseURL)
 	if err != nil {
@@ -74,6 +81,20 @@ func main() {
 		log.Fatalf("shutdown: %v", err)
 	}
 	log.Println("stopped")
+}
+
+func runMigrations(databaseURL string) error {
+	db, err := goose.OpenDBWithDriver("pgx", databaseURL)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	goose.SetLogger(log.Default())
+	if err := goose.Up(db, "migrations"); err != nil {
+		return err
+	}
+	return nil
 }
 
 func runDailyTick(tickSvc service.TickService) {
