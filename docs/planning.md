@@ -17,12 +17,12 @@
 - [x] `docker-compose.yml` — postgres:17.9, golang:1.26.2, node:22.16.0-alpine
 - [x] Hot-reload: Go → `air v1.62.0`; SvelteKit → Vite HMR
 - [x] `.env.example` — DATABASE_URL, JWT_SECRET, PORT, POSTGRES_*
-- [x] `Makefile` — `make dev`, `make server`, `make client`, `make migrate-up/down`
+- [x] `Makefile` — `make dev`, `make server`, `make client`, `make migrate-up/down`, `make db-reset`, `make db-clean`
 - [x] Миграция `00001_init.sql` — все таблицы схемы
 
 ---
 
-## Фаза 1 — Go-сервер
+## Фаза 1 — Go-сервер ✅
 
 **Цель:** полностью рабочий REST API, покрытый тестами, проверенный curl-ами.
 
@@ -31,26 +31,27 @@
 - [x] Структура: `cmd/server/`, `internal/handler/`, `internal/service/`, `internal/repo/`, `internal/model/`, `config/`, `migrations/`
 - [x] HTTP-роутер: chi v5.2.5
 - [x] PostgreSQL: pgx v5.9.2 (без ORM, сырые запросы)
-- [x] Миграции: goose v3.27.0, SQL-файлы в `migrations/`
+- [x] Миграции: goose v3.27.0, автозапуск при старте сервера
 - [x] Конфиг: `config/config.go`, читает из `.env` / env vars
 - [x] DB-пул: инициализация `pgxpool` в `main.go`, передача в handlers
 - [x] JWT middleware: `internal/middleware/auth.go`
 
 ### 1.2 Схема БД ✅
 
-Реализована в `migrations/00001_init.sql`:
 - `users`, `flowers`, `user_flowers`, `waterings`, `seeds`, `notifications`
+- `00002_seed_flowers.sql` — 3 шаблона цветков сезона 1
+- `00003_watering_unique_per_day.sql` — один полив на цветок в день (любым пользователем)
 
 ### 1.3 Эндпоинты
 
 | Метод | Путь                     | Реализован | Тесты |
 |-------|--------------------------|-----------|-------|
-| POST  | /api/auth/register       | [x]       | [ ]   |
-| POST  | /api/auth/login          | [x]       | [ ]   |
+| POST  | /api/auth/register       | [x]       | [x]   |
+| POST  | /api/auth/login          | [x]       | [x]   |
 | GET   | /api/me                  | [x]       | [ ]   |
-| POST  | /api/flowers/:id/water   | [x]       | [ ]   |
+| POST  | /api/flowers/:id/water   | [x]       | [x]   |
 | GET   | /api/flowers/user/:id    | [x]       | [ ]   |
-| POST  | /api/flowers/plant       | [x]       | [ ]   |
+| POST  | /api/flowers/plant       | [x]       | [x]   |
 | GET   | /api/leaderboard         | [x]       | [ ]   |
 | GET   | /api/seeds               | [x]       | [ ]   |
 | POST  | /api/seeds/share         | [x]       | [ ]   |
@@ -58,10 +59,12 @@
 
 ### 1.4 Dev-эндпоинты (только при `APP_ENV=development`)
 
-| Метод | Путь           | Описание                                      |
-|-------|----------------|-----------------------------------------------|
-| POST  | /api/dev/tick  | Запустить ежедневный тик вручную (+24h)        |
-| GET   | /api/dev/users | Список всех пользователей для смены профиля   |
+| Метод | Путь             | Описание                                      |
+|-------|------------------|-----------------------------------------------|
+| POST  | /api/dev/tick    | Запустить ежедневный тик вручную (+24h)        |
+| GET   | /api/dev/users   | Список всех пользователей для смены профиля   |
+| POST  | /api/dev/seeds   | Выдать семена текущему пользователю           |
+| POST  | /api/dev/reset   | Очистить все пользовательские данные          |
 
 ### 1.5 Бизнес-логика
 
@@ -69,13 +72,28 @@
 - [x] Сервисный слой (`internal/service/`) — бизнес-правила, изолирован от БД
 - [x] Ежедневный тик: cron-планировщик, проверка поливов, начисление FD, семена, уведомления
 - [x] Лимит 64 активных цветков на пользователя
-- [x] Один полив на цветок в день от одного пользователя (UNIQUE constraint + проверка)
+- [x] Один полив на цветок в день (любым пользователем) — UNIQUE (user_flower_id, watered_date)
 
 ### 1.6 Тестирование
 
 - [x] Unit-тесты сервисного слоя (моки репозитория через интерфейсы)
 - [x] Integration-тесты с реальной БД (`testcontainers-go`)
-- [x] `docs/curl-tests.md` — сценарий: регистрация → логин → посадить → полить → лидерборд
+- [x] `docs/curl-tests.md` — полный сценарий с dev-эндпоинтами
+
+---
+
+## Доработки API (приоритет перед Фазой 2)
+
+Без этого клиент не сможет нормально работать:
+
+| Приоритет | Задача | Почему нужно |
+|-----------|--------|--------------|
+| 🔴 Высокий | `GET /api/flowers` — список шаблонов цветков | Клиент должен показывать, что можно посадить |
+| 🔴 Высокий | `PATCH /api/notifications/read` — отметить прочитанными | Иначе бейдж уведомлений никогда не пропадёт |
+| 🟡 Средний | `GET /api/flowers/:id` — цветок по ID | Нужен для страницы детали цветка |
+| 🟡 Средний | `PUT /api/me` — обновить first_name | Экран Profile |
+| 🟢 Низкий | Пагинация leaderboard (`?limit=&offset=`) | Когда пользователей станет много |
+| 🟢 Низкий | `GET /api/users/:id` — публичный профиль | Для страницы Garden чужого пользователя |
 
 ---
 
@@ -91,8 +109,10 @@
 
 Плавающее окно поверх интерфейса для тестирования:
 - [ ] Перемещается по экрану (drag), сворачивается
-- [ ] `+24h` — сдвигает серверное время на сутки вперёд (вызывает ежедневный тик вручную)
-- [ ] `Change user` — переключение между тестовыми профилями без выхода/входа
+- [ ] `+24h` — вызывает `POST /api/dev/tick`
+- [ ] `Change user` — переключение через `GET /api/dev/users` без выхода/входа
+- [ ] `Give seeds` — вызывает `POST /api/dev/seeds`
+- [ ] `Reset DB` — вызывает `POST /api/dev/reset`
 - [ ] Рендерится только при `dev: true` в SvelteKit (не попадает в prod-сборку)
 
 ### Задачи
@@ -133,5 +153,5 @@
 ## Текущий приоритет
 
 ```
-✅ Фаза 0 → ✅ Фаза 1 (Go-сервер) → 🔄 Фаза 2 (Web-клиент) → Фаза 3 (3D)
+✅ Фаза 0 → ✅ Фаза 1 → 🔄 Доработки API → Фаза 2 (Web-клиент) → Фаза 3 (3D)
 ```
