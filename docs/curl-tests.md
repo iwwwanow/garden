@@ -3,8 +3,17 @@
 Полный сценарий: регистрация → логин → посадить → полить → лидерборд → семена → уведомления.
 
 Предварительно запустите сервер:
+
 ```bash
 make dev   # или: cd server && air
+```
+
+Для чистого старта:
+
+```bash
+make db-clean   # сбросить пользовательские данные (схема и шаблоны цветков остаются)
+# или
+make db-reset   # полный сброс + миграции
 ```
 
 ---
@@ -51,8 +60,8 @@ TOKEN2=$(curl -s -X POST $BASE/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"username":"bob","password":"pass456"}' | jq -r '.token')
 
-echo "Alice token: $TOKEN"
-echo "Bob token:   $TOKEN2"
+echo "Alice: $TOKEN"
+echo "Bob:   $TOKEN2"
 
 # Неверный пароль → 401
 curl -s -X POST $BASE/api/auth/login \
@@ -69,25 +78,16 @@ curl -s $BASE/api/me \
   -H "Authorization: Bearer $TOKEN" | jq .
 ```
 
-Ожидаемый ответ:
-```json
-{
-  "user":    { "id": 1, "username": "alice", "fd_balance": 0, ... },
-  "flowers": [],
-  "seeds":   []
-}
-```
-
 ---
 
-## 4. Дать семена (dev)
-
-Через SQL или `/api/dev/tick` семена появляются после 7 дней. Для быстрого теста — вставьте напрямую:
+## 4. Дать семена (dev-эндпоинт)
 
 ```bash
-# Вставить семя через psql (если запущен docker compose)
-docker compose exec db psql -U garden -d garden \
-  -c "INSERT INTO seeds (user_id, flower_id, quantity) VALUES (1, 1, 5) ON CONFLICT (user_id, flower_id) DO UPDATE SET quantity = seeds.quantity + 5;"
+# Дать 5 семян flower_id=1 текущему пользователю
+curl -s -X POST $BASE/api/dev/seeds \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"flower_id":1,"quantity":5}' | jq .
 ```
 
 ---
@@ -95,11 +95,11 @@ docker compose exec db psql -U garden -d garden \
 ## 5. Посадить цветок
 
 ```bash
-# Посадить flower_id=1 (шаблон из миграции 00002)
-curl -s -X POST $BASE/api/flowers/plant \
+FLOWER_ID=$(curl -s -X POST $BASE/api/flowers/plant \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"flower_id":1}' | jq .
+  -d '{"flower_id":1}' | jq -r '.id')
+echo "flower id: $FLOWER_ID"
 
 # Недостаточно семян → 422
 curl -s -X POST $BASE/api/flowers/plant \
@@ -108,55 +108,49 @@ curl -s -X POST $BASE/api/flowers/plant \
   -d '{"flower_id":999}' | jq .
 ```
 
-Запомнить `id` посаженного цветка:
-```bash
-FLOWER_ID=$(curl -s -X POST $BASE/api/flowers/plant \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"flower_id":1}' | jq -r '.id')
-echo "flower id: $FLOWER_ID"
-```
-
 ---
 
 ## 6. Полить цветок
+
+> **Правило:** каждый цветок можно полить ровно один раз в день — кем угодно.  
+> Первый полив за день «закрывает» цветок. Любая следующая попытка → 409.
 
 ```bash
 # Alice поливает свой цветок
 curl -s -X POST $BASE/api/flowers/$FLOWER_ID/water \
   -H "Authorization: Bearer $TOKEN" | jq .
+# → {"status":"ok"}
 
-# Повторный полив → 409 Already watered
+# Любая повторная попытка (хоть Alice, хоть Bob) → 409 Already watered
 curl -s -X POST $BASE/api/flowers/$FLOWER_ID/water \
+  -H "Authorization: Bearer $TOKEN2" | jq .
+# → {"error":"already watered today"}
+
+# Bob поливает ДРУГОЙ цветок Alice (если у неё их несколько)
+# curl -s -X POST $BASE/api/flowers/$FLOWER_ID2/water -H "Authorization: Bearer $TOKEN2" | jq .
+```
+
+---
+
+## 7. Чужой сад
+
+```bash
+# Цветки пользователя с id=2 (для страницы чужого сада)
+curl -s $BASE/api/flowers/user/2 \
   -H "Authorization: Bearer $TOKEN" | jq .
-
-# Bob поливает цветок Alice
-curl -s -X POST $BASE/api/flowers/$FLOWER_ID/water \
-  -H "Authorization: Bearer $TOKEN2" | jq .
 ```
 
 ---
 
-## 7. Цветки другого пользователя
+## 8. Dev — тик (+24h)
 
 ```bash
-# Получить цветки по user_id (для страницы чужого сада)
-curl -s $BASE/api/flowers/user/1 \
-  -H "Authorization: Bearer $TOKEN2" | jq .
-```
-
----
-
-## 8. Dev-тик (+24h)
-
-```bash
-# Продвинуть время на сутки вперёд (APP_ENV=development)
+# Симулировать полночь: пересохшие цветки → dried, политые → day++, FD++
 curl -s -X POST $BASE/api/dev/tick \
   -H "Authorization: Bearer $TOKEN" | jq .
 
-# Посмотреть обновлённый профиль (FD должен вырасти)
 curl -s $BASE/api/me \
-  -H "Authorization: Bearer $TOKEN" | jq '.user.fd_balance'
+  -H "Authorization: Bearer $TOKEN" | jq '{fd: .user.fd_balance, flowers: (.flowers | map({id, day, is_dried}))}'
 ```
 
 ---
@@ -167,13 +161,13 @@ curl -s $BASE/api/me \
 curl -s $BASE/api/seeds \
   -H "Authorization: Bearer $TOKEN" | jq .
 
-# Поделиться: Alice → Bob, 1 семя flower_id=1
+# Alice делится с Bob
 curl -s -X POST $BASE/api/seeds/share \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"to_user_id":2,"flower_id":1,"quantity":1}' | jq .
 
-# Недостаточно семян → 422
+# Нет столько → 422
 curl -s -X POST $BASE/api/seeds/share \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
@@ -189,11 +183,23 @@ curl -s $BASE/api/notifications \
   -H "Authorization: Bearer $TOKEN" | jq .
 ```
 
-Ожидаемые типы:
-- `flower_watered` — кто-то полил ваш цветок
-- `seeds_received` — вам поделились семенами
-- `flower_dried` — цветок пересох
-- `seed_earned` — цветок дал семя (день % 7 == 0)
+Возможные типы уведомлений и условия их появления:
+
+| Тип              | Когда                                          |
+|------------------|------------------------------------------------|
+| `flower_watered` | Кто-то (не вы) полил ваш цветок               |
+| `seeds_received` | Вам поделились семенами (`/api/seeds/share`)   |
+| `flower_dried`   | Тик: цветок не был полит вчера                 |
+| `seed_earned`    | Тик: цветок достиг дня кратного 7             |
+
+Чтобы увидеть все четыре типа в одном прогоне:
+```bash
+# 1. Зарегистрировать двух пользователей
+# 2. Alice сажает цветок, Bob поливает → flower_watered у Alice
+# 3. Alice делится семенами с Bob → seeds_received у Bob
+# 4. Запустить тик, не полив какой-то цветок → flower_dried
+# 5. Запустить 7 тиков с поливом → seed_earned
+```
 
 ---
 
@@ -206,11 +212,22 @@ curl -s $BASE/api/leaderboard \
 
 ---
 
-## 12. Dev — список пользователей
+## 12. Dev — служебные
 
 ```bash
+# Список всех пользователей
 curl -s $BASE/api/dev/users \
   -H "Authorization: Bearer $TOKEN" | jq '[.[] | {id, username, fd_balance}]'
+
+# Дать семена текущему пользователю
+curl -s -X POST $BASE/api/dev/seeds \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"flower_id":1,"quantity":10}' | jq .
+
+# Сбросить все пользовательские данные (не трогает flower templates)
+curl -s -X POST $BASE/api/dev/reset \
+  -H "Authorization: Bearer $TOKEN" | jq .
 ```
 
 ---
@@ -220,25 +237,36 @@ curl -s $BASE/api/dev/users \
 ```bash
 BASE=http://localhost:8080
 
+# Сброс данных
+curl -s -X POST $BASE/api/dev/reset -H "Authorization: Bearer $TOKEN" > /dev/null 2>&1 || true
+
 # Регистрация
 curl -s -X POST $BASE/api/auth/register -H "Content-Type: application/json" \
   -d '{"username":"alice","password":"pass123","first_name":"Alice"}' > /dev/null
+curl -s -X POST $BASE/api/auth/register -H "Content-Type: application/json" \
+  -d '{"username":"bob","password":"pass456","first_name":"Bob"}' > /dev/null
 
 TOKEN=$(curl -s -X POST $BASE/api/auth/login -H "Content-Type: application/json" \
   -d '{"username":"alice","password":"pass123"}' | jq -r '.token')
+TOKEN2=$(curl -s -X POST $BASE/api/auth/login -H "Content-Type: application/json" \
+  -d '{"username":"bob","password":"pass456"}' | jq -r '.token')
 
-# Дать семена напрямую в БД
-docker compose exec db psql -U garden -d garden \
-  -c "INSERT INTO seeds (user_id, flower_id, quantity) VALUES (1, 1, 5) ON CONFLICT DO NOTHING;"
+# Дать семена через dev-эндпоинт
+curl -s -X POST $BASE/api/dev/seeds \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{"flower_id":1,"quantity":5}' > /dev/null
 
 # Посадить
 FLOWER_ID=$(curl -s -X POST $BASE/api/flowers/plant \
   -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
   -d '{"flower_id":1}' | jq -r '.id')
-
 echo "Planted flower: $FLOWER_ID"
 
-# Полить
+# Bob поливает цветок Alice (социальный полив)
+curl -s -X POST $BASE/api/flowers/$FLOWER_ID/water \
+  -H "Authorization: Bearer $TOKEN2" | jq .
+
+# Alice пытается полить тот же цветок → 409
 curl -s -X POST $BASE/api/flowers/$FLOWER_ID/water \
   -H "Authorization: Bearer $TOKEN" | jq .
 
@@ -247,9 +275,14 @@ curl -s -X POST $BASE/api/dev/tick \
   -H "Authorization: Bearer $TOKEN" | jq .
 
 # Итог
-echo "=== Profile after tick ==="
-curl -s $BASE/api/me -H "Authorization: Bearer $TOKEN" | jq '{fd: .user.fd_balance, flowers: (.flowers | length)}'
+echo "=== Alice after tick ==="
+curl -s $BASE/api/me -H "Authorization: Bearer $TOKEN" | \
+  jq '{fd: .user.fd_balance, flowers: (.flowers | map({id, day, is_dried}))}'
+
+echo "=== Alice notifications ==="
+curl -s $BASE/api/notifications -H "Authorization: Bearer $TOKEN" | jq .
 
 echo "=== Leaderboard ==="
-curl -s $BASE/api/leaderboard -H "Authorization: Bearer $TOKEN" | jq '[.[] | {username, fd_balance}]'
+curl -s $BASE/api/leaderboard -H "Authorization: Bearer $TOKEN" | \
+  jq '[.[] | {username, fd_balance}]'
 ```
