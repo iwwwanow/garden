@@ -142,29 +142,36 @@ FD(day) = day
 
 ---
 
-## API (целевой, Go REST)
+## API (Go REST, реализован)
 
-| Метод | Путь                  | Описание                               |
-|-------|-----------------------|----------------------------------------|
-| POST  | /auth/register        | Регистрация (login + password)         |
-| POST  | /auth/login           | Вход, возвращает JWT                   |
-| GET   | /me                   | Текущий пользователь + цветки + семена |
-| POST  | /flowers/:id/water    | Полить цветок (свой или чужой)         |
-| GET   | /flowers/user/:userId | Цветки пользователя                    |
-| POST  | /flowers/plant        | Посадить новый цветок из семян         |
-| GET   | /leaderboard          | Топ по FD балансу                      |
-| GET   | /seeds                | Свои семена                            |
-| POST  | /seeds/share          | Поделиться семенами                    |
-| GET   | /notifications        | Список уведомлений                     |
+| Метод | Путь                        | Описание                               |
+|-------|-----------------------------|----------------------------------------|
+| POST  | /api/auth/register          | Регистрация (login + password)         |
+| POST  | /api/auth/login             | Вход, возвращает JWT                   |
+| GET   | /api/me                     | Текущий пользователь + цветки + семена |
+| PUT   | /api/me                     | Обновить first_name                    |
+| GET   | /api/flowers                | Список шаблонов цветков сезона         |
+| GET   | /api/flowers/:id            | Шаблон цветка по ID                    |
+| POST  | /api/flowers/plant          | Посадить новый цветок из семян         |
+| POST  | /api/flowers/:id/water      | Полить цветок (свой или чужой)         |
+| GET   | /api/flowers/user/:id       | Цветки пользователя                    |
+| GET   | /api/leaderboard            | Топ по FD балансу (`?limit=&offset=`)  |
+| GET   | /api/seeds                  | Свои семена                            |
+| POST  | /api/seeds/share            | Поделиться семенами                    |
+| GET   | /api/notifications          | Список уведомлений                     |
+| PATCH | /api/notifications/read     | Отметить все прочитанными              |
+| GET   | /api/users/:id              | Публичный профиль пользователя         |
 
 ---
 
 ## Клиенты
 
 ### Web-app / TMA
-- Svelte + Vite + TypeScript
+- **SvelteKit** 2.57.1 + TypeScript + pnpm
+- SSR для публичных страниц (Garden, Leaderboard) — SEO и шаринг
+- CSR (`ssr = false`) для авторизованных экранов
 - UI-kit: `iwwwanow.github.io/ui-kit/`
-- Telegram Mini App (опционально)
+- Telegram Mini App: `@twa-dev/sdk`, опциональная инициализация
 
 ### 3D-клиент
 - Zig + raylib + Sciter
