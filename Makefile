@@ -16,18 +16,18 @@ server:
 client:
 	cd client && pnpm dev
 
-# DB migrations
+# DB migrations (requires running stack: make dev)
 migrate-up:
-	cd server && goose -dir migrations postgres "$(DATABASE_URL)" up
+	docker compose exec server sh -c 'goose -dir migrations postgres "$$DATABASE_URL" up'
 
 migrate-down:
-	cd server && goose -dir migrations postgres "$(DATABASE_URL)" down
+	docker compose exec server sh -c 'goose -dir migrations postgres "$$DATABASE_URL" down'
 
-# Full DB reset: drop all tables and re-run migrations
+# Full DB reset: drop all tables and re-run migrations (requires running stack: make dev)
 db-reset:
 	docker compose exec postgres psql -U $${POSTGRES_USER:-garden} -d $${POSTGRES_DB:-garden} \
 	  -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
-	DATABASE_URL=$${DATABASE_URL:-postgres://garden:garden@localhost:5432/garden?sslmode=disable} $(MAKE) migrate-up
+	docker compose exec server sh -c 'goose -dir migrations postgres "$$DATABASE_URL" up'
 
 # Wipe user data only (keep flower templates and schema)
 db-clean:

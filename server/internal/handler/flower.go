@@ -17,6 +17,33 @@ func NewFlowerHandler(flowers service.FlowerService) *FlowerHandler {
 	return &FlowerHandler{flowers: flowers}
 }
 
+func (h *FlowerHandler) List(w http.ResponseWriter, r *http.Request) {
+	flowers, err := h.flowers.ListFlowers(r.Context())
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to load flowers")
+		return
+	}
+	writeJSON(w, http.StatusOK, flowers)
+}
+
+func (h *FlowerHandler) GetByID(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.Atoi(chi.URLParam(r, "id"))
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid flower id")
+		return
+	}
+	flower, err := h.flowers.GetFlower(r.Context(), id)
+	if err != nil {
+		if errors.Is(err, service.ErrNotFound) {
+			writeError(w, http.StatusNotFound, "flower not found")
+			return
+		}
+		writeError(w, http.StatusInternalServerError, "failed to load flower")
+		return
+	}
+	writeJSON(w, http.StatusOK, flower)
+}
+
 func (h *FlowerHandler) GetUserFlowers(w http.ResponseWriter, r *http.Request) {
 	userID, err := strconv.Atoi(chi.URLParam(r, "userId"))
 	if err != nil {

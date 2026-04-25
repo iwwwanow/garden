@@ -14,6 +14,8 @@ import (
 const maxActiveFlowers = 64
 
 type FlowerService interface {
+	ListFlowers(ctx context.Context) ([]*model.Flower, error)
+	GetFlower(ctx context.Context, id int) (*model.Flower, error)
 	GetUserFlowers(ctx context.Context, userID int) ([]*model.UserFlower, error)
 	Water(ctx context.Context, userFlowerID, wateredByUserID int) error
 	Plant(ctx context.Context, userID, flowerID int) (*model.UserFlower, error)
@@ -35,6 +37,21 @@ func NewFlowerService(
 	n repo.NotificationRepo,
 ) FlowerService {
 	return &flowerService{userFlowers: uf, waterings: w, seeds: s, flowers: f, notifications: n}
+}
+
+func (s *flowerService) ListFlowers(ctx context.Context) ([]*model.Flower, error) {
+	return s.flowers.ListAll(ctx)
+}
+
+func (s *flowerService) GetFlower(ctx context.Context, id int) (*model.Flower, error) {
+	f, err := s.flowers.GetByID(ctx, id)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrNotFound
+		}
+		return nil, err
+	}
+	return f, nil
 }
 
 func (s *flowerService) GetUserFlowers(ctx context.Context, userID int) ([]*model.UserFlower, error) {

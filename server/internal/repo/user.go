@@ -12,7 +12,8 @@ type UserRepo interface {
 	GetByUsername(ctx context.Context, username string) (*model.User, error)
 	GetByID(ctx context.Context, id int) (*model.User, error)
 	AddFD(ctx context.Context, userID, delta int) error
-	Leaderboard(ctx context.Context, limit int) ([]*model.User, error)
+	UpdateFirstName(ctx context.Context, userID int, firstName string) error
+	Leaderboard(ctx context.Context, limit, offset int) ([]*model.User, error)
 	ListAll(ctx context.Context) ([]*model.User, error)
 }
 
@@ -60,9 +61,16 @@ func (r *userRepo) AddFD(ctx context.Context, userID, delta int) error {
 	return err
 }
 
-func (r *userRepo) Leaderboard(ctx context.Context, limit int) ([]*model.User, error) {
+func (r *userRepo) UpdateFirstName(ctx context.Context, userID int, firstName string) error {
+	_, err := r.pool.Exec(ctx,
+		`UPDATE users SET first_name = $1 WHERE id = $2`, firstName, userID,
+	)
+	return err
+}
+
+func (r *userRepo) Leaderboard(ctx context.Context, limit, offset int) ([]*model.User, error) {
 	rows, err := r.pool.Query(ctx,
-		`SELECT `+userColumns+` FROM users ORDER BY fd_balance DESC LIMIT $1`, limit,
+		`SELECT `+userColumns+` FROM users ORDER BY fd_balance DESC LIMIT $1 OFFSET $2`, limit, offset,
 	)
 	if err != nil {
 		return nil, err

@@ -9,6 +9,7 @@ import (
 
 type NotificationService interface {
 	List(ctx context.Context, userID int) ([]*model.Notification, error)
+	MarkAllRead(ctx context.Context, userID int) error
 }
 
 type notificationService struct {
@@ -21,4 +22,8 @@ func NewNotificationService(n repo.NotificationRepo) NotificationService {
 
 func (s *notificationService) List(ctx context.Context, userID int) ([]*model.Notification, error) {
 	return s.notifications.ListByUserID(ctx, userID)
+}
+
+func (s *notificationService) MarkAllRead(ctx context.Context, userID int) error {
+	return s.notifications.MarkAllRead(ctx, userID)
 }

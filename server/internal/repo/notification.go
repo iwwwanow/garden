@@ -11,6 +11,7 @@ import (
 type NotificationRepo interface {
 	Create(ctx context.Context, userID int, notifType string, payload map[string]any) error
 	ListByUserID(ctx context.Context, userID int) ([]*model.Notification, error)
+	MarkAllRead(ctx context.Context, userID int) error
 }
 
 type notificationRepo struct{ pool *pgxpool.Pool }
@@ -27,6 +28,13 @@ func (r *notificationRepo) Create(ctx context.Context, userID int, notifType str
 	_, err = r.pool.Exec(ctx,
 		`INSERT INTO notifications (user_id, type, payload) VALUES ($1, $2, $3)`,
 		userID, notifType, data,
+	)
+	return err
+}
+
+func (r *notificationRepo) MarkAllRead(ctx context.Context, userID int) error {
+	_, err := r.pool.Exec(ctx,
+		`UPDATE notifications SET is_read = true WHERE user_id = $1 AND is_read = false`, userID,
 	)
 	return err
 }

@@ -35,6 +35,7 @@ func NewRouter(cfg *config.Config, pool *pgxpool.Pool) http.Handler {
 	seedH := NewSeedHandler(seedSvc)
 	notifH := NewNotificationHandler(notifSvc)
 	lbH := NewLeaderboardHandler(users)
+	userH := NewUserHandler(users)
 	devH := NewDevHandler(tickSvc, users, seeds, pool)
 
 	r := chi.NewRouter()
@@ -55,16 +56,22 @@ func NewRouter(cfg *config.Config, pool *pgxpool.Pool) http.Handler {
 		r.Use(mw.Auth(cfg.JWTSecret))
 
 		r.Get("/api/me", meH.Me)
+		r.Put("/api/me", meH.UpdateMe)
 		r.Get("/api/leaderboard", lbH.Leaderboard)
 
+		r.Get("/api/flowers", flowerH.List)
 		r.Post("/api/flowers/plant", flowerH.Plant)
 		r.Post("/api/flowers/{id}/water", flowerH.Water)
 		r.Get("/api/flowers/user/{userId}", flowerH.GetUserFlowers)
+		r.Get("/api/flowers/{id}", flowerH.GetByID)
 
 		r.Get("/api/seeds", seedH.GetSeeds)
 		r.Post("/api/seeds/share", seedH.Share)
 
 		r.Get("/api/notifications", notifH.List)
+		r.Patch("/api/notifications/read", notifH.MarkRead)
+
+		r.Get("/api/users/{id}", userH.GetByID)
 	})
 
 	// dev endpoints (only in development)

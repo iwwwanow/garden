@@ -22,3 +22,12 @@ func (h *NotificationHandler) List(w http.ResponseWriter, r *http.Request) {
 	}
 	writeJSON(w, http.StatusOK, list)
 }
+
+func (h *NotificationHandler) MarkRead(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.UserIDFromCtx(r.Context())
+	if err := h.notifications.MarkAllRead(r.Context(), userID); err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to mark notifications")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+}

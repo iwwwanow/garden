@@ -119,7 +119,7 @@ func TestUserRepo_AddFDAndLeaderboard(t *testing.T) {
 	r.AddFD(ctx, alice.ID, 100)
 	r.AddFD(ctx, bob.ID, 50)
 
-	lb, err := r.Leaderboard(ctx, 10)
+	lb, err := r.Leaderboard(ctx, 10, 0)
 	if err != nil {
 		t.Fatalf("Leaderboard: %v", err)
 	}

@@ -64,7 +64,17 @@ func (r *UserRepo) AddFD(_ context.Context, userID, delta int) error {
 	return pgx.ErrNoRows
 }
 
-func (r *UserRepo) Leaderboard(_ context.Context, _ int) ([]*model.User, error) {
+func (r *UserRepo) UpdateFirstName(_ context.Context, userID int, firstName string) error {
+	for _, u := range r.users {
+		if u.ID == userID {
+			u.FirstName = firstName
+			return nil
+		}
+	}
+	return pgx.ErrNoRows
+}
+
+func (r *UserRepo) Leaderboard(_ context.Context, _, _ int) ([]*model.User, error) {
 	result := make([]*model.User, len(r.users))
 	for i, u := range r.users {
 		result[i] = copyUser(u)
@@ -73,7 +83,7 @@ func (r *UserRepo) Leaderboard(_ context.Context, _ int) ([]*model.User, error) 
 }
 
 func (r *UserRepo) ListAll(_ context.Context) ([]*model.User, error) {
-	return r.Leaderboard(context.Background(), 0)
+	return r.Leaderboard(context.Background(), len(r.users), 0)
 }
 
 // ByID is a test-only helper to inspect stored state.
@@ -308,6 +318,15 @@ type NotificationRepo struct {
 }
 
 func NewNotificationRepo() *NotificationRepo { return &NotificationRepo{nextID: 1} }
+
+func (r *NotificationRepo) MarkAllRead(_ context.Context, userID int) error {
+	for _, n := range r.Notifications {
+		if n.UserID == userID {
+			n.IsRead = true
+		}
+	}
+	return nil
+}
 
 func (r *NotificationRepo) Create(_ context.Context, userID int, notifType string, payload map[string]any) error {
 	data, _ := json.Marshal(payload)

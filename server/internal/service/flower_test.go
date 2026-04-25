@@ -167,6 +167,60 @@ func TestPlant_FlowerTemplateNotFound(t *testing.T) {
 	}
 }
 
+// ── ListFlowers ───────────────────────────────────────────────────────────────
+
+func TestListFlowers_ReturnsAll(t *testing.T) {
+	flowers := mock.NewFlowerRepo(
+		&model.Flower{ID: 1, Season: 1, ImagePath: "a.png"},
+		&model.Flower{ID: 2, Season: 1, ImagePath: "b.png"},
+	)
+	svc := newFlowerSvc(mock.NewUserFlowerRepo(), mock.NewWateringRepo(), mock.NewSeedRepo(), flowers, mock.NewNotificationRepo())
+
+	list, err := svc.ListFlowers(context.Background())
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(list) != 2 {
+		t.Errorf("expected 2 flowers, got %d", len(list))
+	}
+}
+
+func TestListFlowers_Empty(t *testing.T) {
+	svc := newFlowerSvc(mock.NewUserFlowerRepo(), mock.NewWateringRepo(), mock.NewSeedRepo(), mock.NewFlowerRepo(), mock.NewNotificationRepo())
+
+	list, err := svc.ListFlowers(context.Background())
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(list) != 0 {
+		t.Errorf("expected empty list, got %d", len(list))
+	}
+}
+
+// ── GetFlower ─────────────────────────────────────────────────────────────────
+
+func TestGetFlower_Found(t *testing.T) {
+	flowers := mock.NewFlowerRepo(&model.Flower{ID: 1, Season: 1, ImagePath: "a.png"})
+	svc := newFlowerSvc(mock.NewUserFlowerRepo(), mock.NewWateringRepo(), mock.NewSeedRepo(), flowers, mock.NewNotificationRepo())
+
+	f, err := svc.GetFlower(context.Background(), 1)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if f.ID != 1 {
+		t.Errorf("expected flower ID 1, got %d", f.ID)
+	}
+}
+
+func TestGetFlower_NotFound(t *testing.T) {
+	svc := newFlowerSvc(mock.NewUserFlowerRepo(), mock.NewWateringRepo(), mock.NewSeedRepo(), mock.NewFlowerRepo(), mock.NewNotificationRepo())
+
+	_, err := svc.GetFlower(context.Background(), 99)
+	if !errors.Is(err, service.ErrNotFound) {
+		t.Fatalf("want ErrNotFound, got %v", err)
+	}
+}
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 func todayDate() time.Time {

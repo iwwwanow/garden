@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/iwwwanow/garden/server/internal/repo"
 )
@@ -13,7 +14,19 @@ func NewLeaderboardHandler(users repo.UserRepo) *LeaderboardHandler {
 }
 
 func (h *LeaderboardHandler) Leaderboard(w http.ResponseWriter, r *http.Request) {
-	users, err := h.users.Leaderboard(r.Context(), 100)
+	limit := 100
+	offset := 0
+	if v := r.URL.Query().Get("limit"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n > 0 && n <= 100 {
+			limit = n
+		}
+	}
+	if v := r.URL.Query().Get("offset"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n >= 0 {
+			offset = n
+		}
+	}
+	users, err := h.users.Leaderboard(r.Context(), limit, offset)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "failed to load leaderboard")
 		return

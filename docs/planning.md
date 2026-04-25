@@ -16,7 +16,7 @@
 - [x] Создать `client-3d/` — Zig 0.16.0 stub, компилируется
 - [x] `docker-compose.yml` — postgres:17.9, golang:1.26.2, node:22.16.0-alpine
 - [x] Hot-reload: Go → `air v1.62.0`; SvelteKit → Vite HMR
-- [x] `.env.example` — DATABASE_URL, JWT_SECRET, PORT, POSTGRES_*
+- [x] `.env.example` — DATABASE*URL, JWT_SECRET, PORT, POSTGRES*\*
 - [x] `Makefile` — `make dev`, `make server`, `make client`, `make migrate-up/down`, `make db-reset`, `make db-clean`
 - [x] Миграция `00001_init.sql` — все таблицы схемы
 
@@ -44,27 +44,32 @@
 
 ### 1.3 Эндпоинты
 
-| Метод | Путь                     | Реализован | Тесты |
-|-------|--------------------------|-----------|-------|
-| POST  | /api/auth/register       | [x]       | [x]   |
-| POST  | /api/auth/login          | [x]       | [x]   |
-| GET   | /api/me                  | [x]       | [ ]   |
-| POST  | /api/flowers/:id/water   | [x]       | [x]   |
-| GET   | /api/flowers/user/:id    | [x]       | [ ]   |
-| POST  | /api/flowers/plant       | [x]       | [x]   |
-| GET   | /api/leaderboard         | [x]       | [ ]   |
-| GET   | /api/seeds               | [x]       | [ ]   |
-| POST  | /api/seeds/share         | [x]       | [ ]   |
-| GET   | /api/notifications       | [x]       | [ ]   |
+| Метод | Путь                    | Реализован | Тесты |
+| ----- | ----------------------- | ---------- | ----- |
+| POST  | /api/auth/register      | [x]        | [x]   |
+| POST  | /api/auth/login         | [x]        | [x]   |
+| GET   | /api/me                 | [x]        | [ ]   |
+| PUT   | /api/me                 | [x]        | [ ]   |
+| GET   | /api/flowers            | [x]        | [x]   |
+| GET   | /api/flowers/:id        | [x]        | [x]   |
+| POST  | /api/flowers/plant      | [x]        | [x]   |
+| POST  | /api/flowers/:id/water  | [x]        | [x]   |
+| GET   | /api/flowers/user/:id   | [x]        | [ ]   |
+| GET   | /api/leaderboard        | [x]        | [ ]   |
+| GET   | /api/seeds              | [x]        | [x]   |
+| POST  | /api/seeds/share        | [x]        | [x]   |
+| GET   | /api/notifications      | [x]        | [x]   |
+| PATCH | /api/notifications/read | [x]        | [x]   |
+| GET   | /api/users/:id          | [x]        | [ ]   |
 
 ### 1.4 Dev-эндпоинты (только при `APP_ENV=development`)
 
-| Метод | Путь             | Описание                                      |
-|-------|------------------|-----------------------------------------------|
-| POST  | /api/dev/tick    | Запустить ежедневный тик вручную (+24h)        |
-| GET   | /api/dev/users   | Список всех пользователей для смены профиля   |
-| POST  | /api/dev/seeds   | Выдать семена текущему пользователю           |
-| POST  | /api/dev/reset   | Очистить все пользовательские данные          |
+| Метод | Путь           | Описание                                    |
+| ----- | -------------- | ------------------------------------------- |
+| POST  | /api/dev/tick  | Запустить ежедневный тик вручную (+24h)     |
+| GET   | /api/dev/users | Список всех пользователей для смены профиля |
+| POST  | /api/dev/seeds | Выдать семена текущему пользователю         |
+| POST  | /api/dev/reset | Очистить все пользовательские данные        |
 
 ### 1.5 Бизнес-логика
 
@@ -82,18 +87,14 @@
 
 ---
 
-## Доработки API (приоритет перед Фазой 2)
+## Доработки API ✅
 
-Без этого клиент не сможет нормально работать:
-
-| Приоритет | Задача | Почему нужно |
-|-----------|--------|--------------|
-| 🔴 Высокий | `GET /api/flowers` — список шаблонов цветков | Клиент должен показывать, что можно посадить |
-| 🔴 Высокий | `PATCH /api/notifications/read` — отметить прочитанными | Иначе бейдж уведомлений никогда не пропадёт |
-| 🟡 Средний | `GET /api/flowers/:id` — цветок по ID | Нужен для страницы детали цветка |
-| 🟡 Средний | `PUT /api/me` — обновить first_name | Экран Profile |
-| 🟢 Низкий | Пагинация leaderboard (`?limit=&offset=`) | Когда пользователей станет много |
-| 🟢 Низкий | `GET /api/users/:id` — публичный профиль | Для страницы Garden чужого пользователя |
+- [x] `GET /api/flowers` — список шаблонов цветков
+- [x] `PATCH /api/notifications/read` — отметить все прочитанными
+- [x] `GET /api/flowers/:id` — цветок по ID
+- [x] `PUT /api/me` — обновить first_name
+- [x] Пагинация leaderboard (`?limit=&offset=`)
+- [x] `GET /api/users/:id` — публичный профиль
 
 ---
 
@@ -108,6 +109,7 @@
 ### Dev-панель (только в dev-режиме)
 
 Плавающее окно поверх интерфейса для тестирования:
+
 - [ ] Перемещается по экрану (drag), сворачивается
 - [ ] `+24h` — вызывает `POST /api/dev/tick`
 - [ ] `Change user` — переключение через `GET /api/dev/users` без выхода/входа
@@ -153,5 +155,5 @@
 ## Текущий приоритет
 
 ```
-✅ Фаза 0 → ✅ Фаза 1 → 🔄 Доработки API → Фаза 2 (Web-клиент) → Фаза 3 (3D)
+✅ Фаза 0 → ✅ Фаза 1 → ✅ Доработки API → 🔄 Фаза 2 (Web-клиент) → Фаза 3 (3D)
 ```
