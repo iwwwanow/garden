@@ -98,43 +98,101 @@
 
 ---
 
-## Фаза 2 — Web-клиент
+## Фаза 2 — Web-клиент 🔄
 
-**Цель:** полностью рабочий web-app / TMA.
+**Цель:** полностью рабочий web-app + Telegram Mini App.
 
 **Стек:** SvelteKit 2.57.1 + TypeScript 6.0.3 + pnpm + ui-kit (`iwwwanow.github.io/ui-kit/`)
 
 **UI-kit:** компоненты из кита — основа. Недостающие добавлять консистентно (токены, стиль, поведение).
 
-### Dev-панель (только в dev-режиме)
+### Архитектура SSR/CSR
 
-Плавающее окно поверх интерфейса для тестирования:
+SvelteKit с гибридным рендерингом:
 
-- [ ] Перемещается по экрану (drag), сворачивается
-- [ ] `+24h` — вызывает `POST /api/dev/tick`
-- [ ] `Change user` — переключение через `GET /api/dev/users` без выхода/входа
-- [ ] `Give seeds` — вызывает `POST /api/dev/seeds`
-- [ ] `Reset DB` — вызывает `POST /api/dev/reset`
-- [ ] Рендерится только при `dev: true` в SvelteKit (не попадает в prod-сборку)
+| Маршрут           | Режим | Причина                           |
+|-------------------|-------|-----------------------------------|
+| `/auth`           | SSR   | быстрый первый рендер             |
+| `/leaderboard`    | SSR   | SEO, шаринг                       |
+| `/garden/[id]`    | SSR   | SEO, og:tags, шаринг чужого сада  |
+| `/home`           | CSR   | за авторизацией, динамические данные |
+| `/seeds`          | CSR   | за авторизацией                   |
+| `/herbarium`      | CSR   | за авторизацией                   |
+| `/notifications`  | CSR   | за авторизацией                   |
+| `/profile`        | CSR   | за авторизацией                   |
+
+CSR-страницы: `export const ssr = false` в `+page.ts`.
+
+### Структура `src/`
+
+```
+routes/
+  +layout.svelte          # глобальный layout, подключение стилей
+  +layout.ts              # глобальный load — проверка JWT, редирект
+  +page.svelte            # редирект: авториз → /home, нет → /auth
+  auth/
+    +page.svelte          # логин / регистрация
+    +page.ts
+  home/
+    +page.svelte          # свои цветки, полив, FD
+    +page.ts              # ssr = false
+  garden/
+    [id]/
+      +page.svelte        # публичный сад пользователя, полив
+      +page.ts            # SSR load: GET /api/users/:id + /api/flowers/user/:id
+  leaderboard/
+    +page.svelte          # топ по FD
+    +page.ts              # SSR load: GET /api/leaderboard
+  seeds/
+    +page.svelte          # инвентарь, поделиться, посадить
+    +page.ts              # ssr = false
+  herbarium/
+    +page.svelte          # пересохшие цветки
+    +page.ts              # ssr = false
+  notifications/
+    +page.svelte          # лента событий, кнопка «прочитать всё»
+    +page.ts              # ssr = false
+  profile/
+    +page.svelte          # username, FD-баланс, edit first_name
+    +page.ts              # ssr = false
+lib/
+  api.ts                  # типизированный fetch-wrapper, JWT
+  stores/
+    auth.ts               # user store (writable)
+  components/
+    DevPanel.svelte       # dev-only: +24h, change user, give seeds, reset
+```
 
 ### Задачи
 
 - [x] Scaffold SvelteKit, adapter-node, vite proxy `/api → localhost:8080`
+- [ ] `src/lib/api.ts` — типизированный fetch-wrapper с JWT (localStorage)
+- [ ] `src/lib/stores/auth.ts` — user store
+- [ ] Глобальный layout: защита авторизованных маршрутов, редирект
 - [ ] Подключить ui-kit
-- [ ] `src/lib/api.ts` — типизированный fetch-wrapper с JWT
-- [ ] TMA: `@twa-dev/sdk`, опциональная привязка Telegram
+- [ ] TMA: `@twa-dev/sdk`, опциональная инициализация
 - [ ] Dev-панель (`src/lib/components/DevPanel.svelte`)
 
 ### Экраны
 
 - [ ] Auth — регистрация / вход
 - [ ] Home — свои цветки, полив, день/FD
-- [ ] Garden — профиль друга, полить чужой цветок
-- [ ] Leaderboard — топ по FD
+- [ ] Garden — публичный профиль, полить чужой цветок
+- [ ] Leaderboard — топ по FD, пагинация
 - [ ] Seeds — инвентарь, поделиться, посадить
 - [ ] Herbarium — пересохшие цветки
-- [ ] Notifications — лента событий
-- [ ] Profile — username, FD-баланс
+- [ ] Notifications — лента событий, отметить прочитанными
+- [ ] Profile — username, FD-баланс, изменить имя
+
+### Dev-панель (только в dev-режиме)
+
+Плавающее окно поверх интерфейса, рендерится только при `dev: true`:
+
+- [ ] Перемещается по экрану (drag), сворачивается
+- [ ] `+24h` — `POST /api/dev/tick`
+- [ ] `Change user` — переключение через `GET /api/dev/users`
+- [ ] `Give seeds` — `POST /api/dev/seeds`
+- [ ] `Reset DB` — `POST /api/dev/reset`
 
 ---
 
