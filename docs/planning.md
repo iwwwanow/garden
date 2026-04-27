@@ -111,20 +111,19 @@
 
 ### Архитектура SSR/CSR
 
-SvelteKit с гибридным рендерингом:
+**Текущее решение: все страницы CSR** (`ssr = false`).
 
-| Маршрут           | Режим | Причина                           |
-|-------------------|-------|-----------------------------------|
-| `/auth`           | SSR   | быстрый первый рендер             |
-| `/leaderboard`    | SSR   | SEO, шаринг                       |
-| `/garden/[id]`    | SSR   | SEO, og:tags, шаринг чужого сада  |
-| `/home`           | CSR   | за авторизацией, динамические данные |
-| `/seeds`          | CSR   | за авторизацией                   |
-| `/herbarium`      | CSR   | за авторизацией                   |
-| `/notifications`  | CSR   | за авторизацией                   |
-| `/profile`        | CSR   | за авторизацией                   |
+Плановая таблица SSR не реализована — заблокирована тремя техническими причинами:
 
-CSR-страницы: `export const ssr = false` в `+page.ts`.
+1. **JWT в localStorage** — SSR рендер происходит на Node.js, `localStorage` там недоступен. Для SSR с авторизацией нужен переход на httpOnly cookie.
+2. **Go API требует `Authorization` на всех эндпоинтах** — даже «публичные» leaderboard и users/:id закрыты токеном. SSR-запрос с Node.js не может его передать без cookie.
+3. **Vite proxy не работает на сервере** — `fetch('/api/...')` во время SSR уходит в SvelteKit, а не в Go. Нужна переменная `PUBLIC_API_BASE=http://localhost:8080`.
+
+**Что нужно для SSR** (отложено в бэклог):
+- Перейти на cookie-based JWT (httpOnly, `Set-Cookie` при логине)
+- Добавить `PUBLIC_API_BASE` в env, использовать в SSR load-функциях
+- Вынести публичные эндпоинты (leaderboard, users/:id, flowers/user/:id) из-за auth-middleware
+- Переписать leaderboard и garden/[id] на `+page.server.ts`
 
 ### Структура `src/`
 
@@ -169,33 +168,64 @@ lib/
 ### Задачи
 
 - [x] Scaffold SvelteKit, adapter-node, vite proxy `/api → localhost:8080`
-- [ ] `src/lib/api.ts` — типизированный fetch-wrapper с JWT (localStorage)
-- [ ] `src/lib/stores/auth.ts` — user store
-- [ ] Глобальный layout: защита авторизованных маршрутов, редирект
+- [x] `src/lib/api.ts` — типизированный fetch-wrapper с JWT (localStorage)
+- [x] `src/lib/stores/auth.ts` — user store
+- [x] Глобальный layout: защита авторизованных маршрутов, редирект
+- [x] `src/app.css` — дизайн-токены и сброс стилей (по ui-spec.md)
 - [ ] Подключить ui-kit
 - [ ] TMA: `@twa-dev/sdk`, опциональная инициализация
-- [ ] Dev-панель (`src/lib/components/DevPanel.svelte`)
+- [x] Dev-панель (`src/lib/components/DevPanel.svelte`)
+
+### Компоненты
+
+- [x] `ActionButton.svelte` — variant: primary / confirm / muted
+- [x] `FlowerCard.svelte` — type: flower / seed / herbarium
+- [x] `BottomNav.svelte` — 3 таба, фиксированный
+- [x] `DevPanel.svelte` — drag, tick, users, seeds, reset
 
 ### Экраны
 
-- [ ] Auth — регистрация / вход
-- [ ] Home — свои цветки, полив, день/FD
-- [ ] Garden — публичный профиль, полить чужой цветок
-- [ ] Leaderboard — топ по FD, пагинация
-- [ ] Seeds — инвентарь, поделиться, посадить
-- [ ] Herbarium — пересохшие цветки
-- [ ] Notifications — лента событий, отметить прочитанными
-- [ ] Profile — username, FD-баланс, изменить имя
+- [x] Auth — регистрация / вход
+- [x] Home — hero (цветок с макс. day, FD-баланс), preview семян и гербария
+- [x] Garden — публичный сад: hero + сетка, полить чужой цветок
+- [x] Leaderboard — топ по FD (Дней подряд / Семена — табы-заглушки)
+- [x] Seeds — инвентарь сетка, empty state
+- [x] Seed detail — посадить, поделиться (share form)
+- [x] Flower detail — полить, запросить полив, статистика
+- [x] Herbarium — витрина + сетка
+- [x] Herbarium detail — скрыть/выставить (toggle, visibility API — бэклог)
+- [x] Notifications — лента, отметить прочитанными
+- [x] Profile — просмотр, редактировать имя, выход
 
 ### Dev-панель (только в dev-режиме)
 
-Плавающее окно поверх интерфейса, рендерится только при `dev: true`:
+- [x] Перемещается по экрану (drag), сворачивается
+- [x] `+24h` — `POST /api/dev/tick`
+- [x] `Change user` — переключение через `GET /api/dev/users`
+- [x] `Give seeds` — `POST /api/dev/seeds`
+- [x] `Reset DB` — `POST /api/dev/reset`
 
-- [ ] Перемещается по экрану (drag), сворачивается
-- [ ] `+24h` — `POST /api/dev/tick`
-- [ ] `Change user` — переключение через `GET /api/dev/users`
-- [ ] `Give seeds` — `POST /api/dev/seeds`
-- [ ] `Reset DB` — `POST /api/dev/reset`
+### Архитектурные решения
+
+- Все страницы CSR (`ssr = false`) — SSR для leaderboard/garden/[id] в бэклоге (требует настройки PUBLIC_API_BASE и cookie-based auth)
+- Маршрут-группа `(app)/` — добавляет BottomNav ко всем страницам кроме `/auth`
+- Защита роутов: каждый `+page.ts` проверяет `localStorage.getItem('token')`, редирект на `/auth`
+- Изображения цветков: эмодзи-плейсхолдеры до реализации static-сервинга на Go
+
+### Интеграционные тесты клиента
+
+**Стек:** Playwright + отдельный `docker-compose.test.yml`
+
+- [ ] Установить Playwright в `client/` (`pnpm add -D @playwright/test`)
+- [ ] `docker-compose.test.yml` — postgres + Go server (`APP_ENV=test`) + SvelteKit (built)
+- [ ] `playwright.config.ts` — baseURL, запуск стека перед тестами (`webServer`)
+- [ ] Тест: регистрация → логин → редирект на `/home`
+- [ ] Тест: полить цветок → FD увеличился
+- [ ] Тест: leaderboard рендерится, строка текущего пользователя выделена
+- [ ] Тест: `/auth` редиректит на `/home` если уже авторизован
+- [ ] Тест: полив на чужом профиле — user A сажает цветок, user B заходит на `/garden/:id`, нажимает полить, успех
+- [ ] Тест: поделиться семенами — user A имеет семена, вводит username user B, передаёт, у user B появляются семена
+- [ ] `make test-client` — команда в Makefile
 
 ---
 
@@ -215,6 +245,7 @@ lib/
 
 ## Бэклог (отложено)
 
+- **SSR для leaderboard и garden/[id]:** SEO, og:tags, шаринг. Требует: cookie-based JWT, `PUBLIC_API_BASE` env, публичные эндпоинты на Go, переписать на `+page.server.ts`. Пока все страницы CSR.
 - **Поливы-рейтинг ("Верда"):** таб в Leaderboard — топ пользователей по количеству поливов чужих цветков. Механика полива уже в API (`waterings`), нужен только запрос агрегации + UI-таб. Отложено до финализации основного Leaderboard.
 - **Feed / Лента:** лента активности (запросы полива, события). Таб зарезервирован в nav. Отложено до backend-поддержки.
 - **Herbarium visibility:** эндпоинт `PATCH /api/herbarium/:id/visibility` — скрыть/показать цветок в витрине. Нужен для страницы `/herbarium/[id]`.
