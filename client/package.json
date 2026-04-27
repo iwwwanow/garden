@@ -15,6 +15,7 @@
 		"@sveltejs/adapter-node": "5.2.9",
 		"@sveltejs/kit": "2.57.1",
 		"@sveltejs/vite-plugin-svelte": "7.0.0",
+		"@types/node": "22.15.18",
 		"svelte": "5.55.4",
 		"svelte-check": "4.4.6",
 		"typescript": "6.0.3",
