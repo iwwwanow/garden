@@ -1,6 +1,7 @@
 # Planning — Garden of the Goddess of Flowers
 
 > Логика игры: `docs/game-logic.md`  
+> UI-спецификация (источник правды для интерфейса): `docs/ui-spec.md`  
 > 3D клиент tech validation: `docs/agents/3d-client-planning.md`
 
 ---
@@ -103,6 +104,8 @@
 **Цель:** полностью рабочий web-app + Telegram Mini App.
 
 **Стек:** SvelteKit 2.57.1 + TypeScript 6.0.3 + pnpm + ui-kit (`iwwwanow.github.io/ui-kit/`)
+
+**UI-спецификация:** `docs/ui-spec.md` — источник правды для всего интерфейса: дизайн-система, компоненты, страницы, поведение.
 
 **UI-kit:** компоненты из кита — основа. Недостающие добавлять консистентно (токены, стиль, поведение).
 
