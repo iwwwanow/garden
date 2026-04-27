@@ -36,7 +36,7 @@ func NewRouter(cfg *config.Config, pool *pgxpool.Pool) http.Handler {
 	notifH := NewNotificationHandler(notifSvc)
 	lbH := NewLeaderboardHandler(users)
 	userH := NewUserHandler(users)
-	devH := NewDevHandler(tickSvc, users, seeds, pool)
+	devH := NewDevHandler(tickSvc, users, seeds, pool, cfg.JWTSecret)
 
 	r := chi.NewRouter()
 	r.Use(chimw.Logger)
@@ -71,11 +71,15 @@ func NewRouter(cfg *config.Config, pool *pgxpool.Pool) http.Handler {
 		r.Get("/api/notifications", notifH.List)
 		r.Patch("/api/notifications/read", notifH.MarkRead)
 
-		r.Get("/api/users/{id}", userH.GetByID)
+		r.Get("/api/users/by-username/{username}", userH.GetByUsername)
+			r.Get("/api/users/{id}", userH.GetByID)
 	})
 
 	// dev endpoints (only in development)
 	if cfg.AppEnv == "development" {
+		// public dev endpoint — no auth required (token issuance for user switching)
+		r.Post("/api/dev/token", devH.Token)
+
 		r.Group(func(r chi.Router) {
 			r.Use(mw.Auth(cfg.JWTSecret))
 			r.Post("/api/dev/tick", devH.Tick)
