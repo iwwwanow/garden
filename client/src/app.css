@@ -1,70 +1,23 @@
+/* ── Проектные токены ─────────────────────────────── */
 :root {
-	--color-bg: #ffffff;
-	--color-nav: #d9d9d9;
-	--color-primary: #243c9a;
-	--color-confirm: #249a57;
-	--color-text: #000000;
-	--color-card: #ebebeb;
+	--color-primary:   #243c9a;
+	--color-confirm:   #249a57;
 	--color-highlight: #2cff76;
-	--color-muted: #c0c0c0;
-	--nav-height: 101px;
-	--page-padding: 20px;
-	--btn-width: 363px;
-	--btn-height: 55px;
+	--color-muted:     #c0c0c0;
+	--nav-height:      56px;
+	--page-padding:    20px;
+	--btn-width:       363px;
+	--btn-height:      55px;
 }
 
-*,
-*::before,
-*::after {
-	box-sizing: border-box;
-	margin: 0;
-	padding: 0;
+/* ── Шрифт (из kit.css) ───────────────────────────── */
+html, body {
+	font-family: "Roboto Condensed", "Helvetica Neue Condensed", sans-serif;
 }
 
-html,
-body {
-	/* font-family comes from ui-kit */
-	font-size: 16px;
-	background: var(--color-bg);
-	color: var(--color-text);
-	-webkit-font-smoothing: antialiased;
-	min-height: 100dvh;
-}
-
-a {
-	color: inherit;
-	text-decoration: none;
-}
-
-button {
-	font-family: inherit;
-	cursor: pointer;
-	border: none;
-	background: none;
-}
-
+/* ── Общий layout страницы ────────────────────────── */
 .page {
-	padding: var(--page-padding);
-	padding-bottom: calc(var(--nav-height) + var(--page-padding));
 	max-width: 440px;
 	margin: 0 auto;
-}
-
-.page--no-nav {
-	padding-bottom: var(--page-padding);
-}
-
-h1 {
-	font-size: 32px;
-	font-weight: 600;
-}
-
-h2 {
-	font-size: 20px;
-	font-weight: 600;
-}
-
-h3 {
-	font-size: 16px;
-	font-weight: 500;
+	padding: 20px var(--page-padding) calc(var(--nav-height) + 20px);
 }

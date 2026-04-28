@@ -22,46 +22,22 @@
 
 <button
 	{type}
-	class="btn btn--{variant}"
+	data-variant={variant}
+	class="action-btn"
 	disabled={disabled || loading}
 	{onclick}
 >
 	{#if loading}
-		...
+		<span class="spinner spinner-sm"></span>
 	{:else}
 		{@render children()}
 	{/if}
 </button>
 
 <style>
-	.btn {
-		display: block;
+	/* структурное: размер из токенов */
+	.action-btn {
 		width: var(--btn-width, 363px);
 		height: var(--btn-height, 55px);
-		font-size: 24px;
-		font-weight: 400;
-		color: #ffffff;
-		text-align: center;
-		cursor: pointer;
-		border: none;
-		border-radius: 0;
-		transition: opacity 0.1s;
-	}
-
-	.btn:disabled {
-		opacity: 0.5;
-		cursor: not-allowed;
-	}
-
-	.btn--primary {
-		background: var(--color-primary);
-	}
-
-	.btn--confirm {
-		background: var(--color-confirm);
-	}
-
-	.btn--muted {
-		background: var(--color-muted);
 	}
 </style>

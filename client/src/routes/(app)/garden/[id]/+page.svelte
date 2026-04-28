@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
-	import { users, flowers as flowersApi, totalFd, needsWatering, flowerEmoji, formatDate, ApiError, type UserFlower, type User } from '$lib/api';
+	import { users, flowers as flowersApi, totalFd, needsWatering, ApiError, type UserFlower, type User, type FlowerTemplate } from '$lib/api';
 	import { userStore } from '$lib/stores/auth';
 	import ActionButton from '$lib/components/ActionButton.svelte';
 	import FlowerCard from '$lib/components/FlowerCard.svelte';
@@ -12,6 +12,7 @@
 
 	let owner = $state<User | null>(null);
 	let userFlowers = $state<UserFlower[]>([]);
+	let templates = $state<FlowerTemplate[]>([]);
 	let loading = $state(true);
 	let wateringId = $state<number | null>(null);
 	let waterError = $state('');
@@ -20,18 +21,25 @@
 	const driedFlowers = $derived(userFlowers.filter((f) => f.is_dried));
 	const heroFlower = $derived(liveFlowers.length ? [...liveFlowers].sort((a, b) => b.day - a.day)[0] : null);
 	const heroFd = $derived(heroFlower ? totalFd(heroFlower.day) : 0);
-	const heroEmoji = $derived(heroFlower ? flowerEmoji(heroFlower.flower_id) : '');
 	const heroNeedsWater = $derived(heroFlower ? needsWatering(heroFlower) : false);
+	const heroTemplate = $derived(heroFlower ? templates.find((t) => t.id === heroFlower.flower_id) : null);
+
+	function imgPath(f: UserFlower): string | undefined {
+		const t = templates.find((t) => t.id === f.flower_id);
+		return t ? `/${t.image_path}` : undefined;
+	}
 
 	async function loadData() {
 		loading = true;
 		try {
-			const [ownerData, flowerData] = await Promise.all([
+			const [ownerData, flowerData, tmpl] = await Promise.all([
 				users.getById(gardenUserId),
-				flowersApi.getByUser(gardenUserId)
+				flowersApi.getByUser(gardenUserId),
+				flowersApi.listTemplates()
 			]);
 			owner = ownerData;
 			userFlowers = flowerData ?? [];
+			templates = tmpl ?? [];
 		} finally {
 			loading = false;
 		}
@@ -55,174 +63,54 @@
 </script>
 
 {#if loading}
-	<div class="loading">загрузка...</div>
+	<p>загрузка...</p>
 {:else if owner}
-	<section class="hero">
-		<div class="hero-header">
-			<div>
-				<div class="owner-tag">
-					owner: <a href="/garden/{gardenUserId}">@{owner.username}</a>
-				</div>
-				<div class="fd-balance">{owner.fd_balance} FD</div>
-				<div class="meta">{liveFlowers.length} живых · {driedFlowers.length} в гербарии</div>
-			</div>
-		</div>
+	<div class="page">
+		<p>owner: <a href="/garden/{gardenUserId}">@{owner.username}</a></p>
+		<h1>{owner.fd_balance} FD</h1>
+		<p>{liveFlowers.length} живых · {driedFlowers.length} гербарий</p>
 
-		{#if heroFlower}
-			<div class="hero-flower">
-				<div class="hero-emoji">{heroEmoji}</div>
-				<div class="hero-fd">{heroFd} FD</div>
-				<div class="hero-meta">День {heroFlower.day} · Посажен {formatDate(heroFlower.created_at)}</div>
-			</div>
-
-			{#if waterError}
-				<p class="water-error">{waterError}</p>
-			{/if}
-
-			{#if heroNeedsWater}
-				<div class="hero-action">
-					<ActionButton variant="confirm" loading={wateringId === heroFlower.id} onclick={waterHero}>
-						P Полить
-					</ActionButton>
-				</div>
-			{/if}
-		{:else}
-			<div class="no-flowers">Нет живых цветков</div>
+		{#if heroTemplate?.image_path}
+			<img src="/{heroTemplate.image_path}" alt="цветок" style="width:100%;" />
 		{/if}
-	</section>
+		{#if heroFlower}
+			<p>{heroFd} FD · День {heroFlower.day}</p>
+		{/if}
 
-	{#if liveFlowers.length > 0}
-		<section class="section">
-			<h2>цветки</h2>
+		{#if waterError}<p>{waterError}</p>{/if}
+
+		{#if heroNeedsWater && heroFlower}
+			<ActionButton variant="confirm" loading={wateringId === heroFlower.id} onclick={waterHero}>
+				P Полить
+			</ActionButton>
+		{/if}
+
+		{#if liveFlowers.length > 0}
+			<h2>Цветки</h2>
 			<div class="grid">
 				{#each liveFlowers as flower}
-					<FlowerCard
-						{flower}
-						type="flower"
-						flowerTemplateId={flower.flower_id}
-						onclick={() => goto(`/flower/${flower.id}`)}
-					/>
+					<FlowerCard {flower} type="flower" imagePath={imgPath(flower)}
+						onclick={() => goto(`/flower/${flower.id}`)} />
 				{/each}
 			</div>
-		</section>
-	{/if}
+		{/if}
 
-	{#if driedFlowers.length > 0}
-		<section class="section">
-			<h2>гербарий</h2>
+		{#if driedFlowers.length > 0}
+			<h2>Гербарий</h2>
 			<div class="grid">
-				{#each driedFlowers.slice(0, 3) as flower}
-					<FlowerCard
-						{flower}
-						type="herbarium"
-						flowerTemplateId={flower.flower_id}
-						onclick={() => goto(`/herbarium/${flower.id}`)}
-					/>
+				{#each driedFlowers.slice(0, 4) as flower}
+					<FlowerCard {flower} type="herbarium" imagePath={imgPath(flower)}
+						onclick={() => goto(`/herbarium/${flower.id}`)} />
 				{/each}
 			</div>
-		</section>
-	{/if}
+		{/if}
+	</div>
 {/if}
 
 <style>
-	.loading {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		height: 100dvh;
-		font-size: 18px;
-		opacity: 0.4;
-	}
-
-	.hero {
-		min-height: 100dvh;
-		display: flex;
-		flex-direction: column;
-		padding: 24px var(--page-padding);
-		max-width: 440px;
-		margin: 0 auto;
-	}
-
-	.hero-header {
-		display: flex;
-		justify-content: space-between;
-		align-items: flex-start;
-	}
-
-	.owner-tag {
-		font-size: 14px;
-		opacity: 0.6;
-	}
-
-	.fd-balance {
-		font-size: 48px;
-		font-weight: 600;
-		line-height: 1.1;
-	}
-
-	.meta {
-		font-size: 13px;
-		opacity: 0.5;
-		margin-top: 4px;
-	}
-
-	.hero-flower {
-		flex: 1;
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		gap: 8px;
-	}
-
-	.hero-emoji {
-		font-size: 128px;
-		line-height: 1;
-	}
-
-	.hero-fd {
-		font-size: 28px;
-		font-weight: 600;
-	}
-
-	.hero-meta {
-		font-size: 13px;
-		opacity: 0.5;
-	}
-
-	.hero-action {
-		display: flex;
-		justify-content: center;
-		margin-top: 12px;
-	}
-
-	.no-flowers {
-		flex: 1;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		font-size: 16px;
-		opacity: 0.4;
-	}
-
-	.water-error {
-		color: #c00;
-		font-size: 13px;
-		text-align: center;
-		margin-top: 8px;
-	}
-
-	.section {
-		padding: 20px var(--page-padding);
-		max-width: 440px;
-		margin: 0 auto;
-		width: 100%;
-	}
-
 	.grid {
 		display: grid;
 		grid-template-columns: 1fr 1fr;
 		gap: 8px;
-		margin-top: 12px;
 	}
 </style>
