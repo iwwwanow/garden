@@ -12,6 +12,7 @@ type UserFlowerRepo interface {
 	GetByID(ctx context.Context, id int) (*model.UserFlower, error)
 	ListByUserID(ctx context.Context, userID int) ([]*model.UserFlower, error)
 	CountActiveByUserID(ctx context.Context, userID int) (int, error)
+	CountPlantedToday(ctx context.Context, userID int) (int, error)
 	ListActive(ctx context.Context) ([]*model.UserFlower, error)
 	IncrementDay(ctx context.Context, id int) error
 	SetDried(ctx context.Context, id int) error
@@ -69,6 +70,14 @@ func (r *userFlowerRepo) CountActiveByUserID(ctx context.Context, userID int) (i
 	var count int
 	err := r.pool.QueryRow(ctx,
 		`SELECT COUNT(*) FROM user_flowers WHERE user_id = $1 AND is_dried = false`, userID,
+	).Scan(&count)
+	return count, err
+}
+
+func (r *userFlowerRepo) CountPlantedToday(ctx context.Context, userID int) (int, error) {
+	var count int
+	err := r.pool.QueryRow(ctx,
+		`SELECT COUNT(*) FROM user_flowers WHERE user_id = $1 AND created_at::date = CURRENT_DATE`, userID,
 	).Scan(&count)
 	return count, err
 }

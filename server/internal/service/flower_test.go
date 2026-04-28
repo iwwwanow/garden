@@ -153,6 +153,22 @@ func TestPlant_MaxFlowers(t *testing.T) {
 	}
 }
 
+func TestPlant_DailyLimitReached(t *testing.T) {
+	uf := mock.NewUserFlowerRepo()
+	s := mock.NewSeedRepo()
+	flowers := mock.NewFlowerRepo(&model.Flower{ID: 1})
+	n := mock.NewNotificationRepo()
+
+	s.Upsert(context.Background(), 1, 1, 5)
+	uf.Create(context.Background(), 1, 1) // already planted one today
+
+	svc := newFlowerSvc(uf, mock.NewWateringRepo(), s, flowers, n)
+	_, err := svc.Plant(context.Background(), 1, 1)
+	if !errors.Is(err, service.ErrPlantLimitReached) {
+		t.Fatalf("want ErrPlantLimitReached, got %v", err)
+	}
+}
+
 func TestPlant_FlowerTemplateNotFound(t *testing.T) {
 	s := mock.NewSeedRepo()
 	s.Upsert(context.Background(), 1, 99, 1)

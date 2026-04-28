@@ -10,4 +10,5 @@ var (
 	ErrFlowerDried         = errors.New("flower is dried")
 	ErrMaxFlowers          = errors.New("max 64 active flowers reached")
 	ErrInsufficientSeeds   = errors.New("insufficient seeds")
+	ErrPlantLimitReached   = errors.New("only 1 flower can be planted per day")
 )

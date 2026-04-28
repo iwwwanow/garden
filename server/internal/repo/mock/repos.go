@@ -166,6 +166,17 @@ func (r *UserFlowerRepo) CountActiveByUserID(_ context.Context, userID int) (int
 	return count, nil
 }
 
+func (r *UserFlowerRepo) CountPlantedToday(_ context.Context, userID int) (int, error) {
+	today := time.Now().UTC().Truncate(24 * time.Hour)
+	count := 0
+	for _, uf := range r.flowers {
+		if uf.UserID == userID && !uf.CreatedAt.Before(today) {
+			count++
+		}
+	}
+	return count, nil
+}
+
 func (r *UserFlowerRepo) ListActive(_ context.Context) ([]*model.UserFlower, error) {
 	var result []*model.UserFlower
 	for _, uf := range r.flowers {

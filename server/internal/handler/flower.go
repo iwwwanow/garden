@@ -99,6 +99,8 @@ func (h *FlowerHandler) Plant(w http.ResponseWriter, r *http.Request) {
 			writeError(w, http.StatusUnprocessableEntity, err.Error())
 		case errors.Is(err, service.ErrInsufficientSeeds):
 			writeError(w, http.StatusUnprocessableEntity, err.Error())
+		case errors.Is(err, service.ErrPlantLimitReached):
+			writeError(w, http.StatusUnprocessableEntity, err.Error())
 		default:
 			writeError(w, http.StatusInternalServerError, "planting failed")
 		}

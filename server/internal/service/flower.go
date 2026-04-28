@@ -119,6 +119,15 @@ func (s *flowerService) Plant(ctx context.Context, userID, flowerID int) (*model
 		return nil, ErrMaxFlowers
 	}
 
+	// check daily plant limit
+	plantedToday, err := s.userFlowers.CountPlantedToday(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	if plantedToday >= 1 {
+		return nil, ErrPlantLimitReached
+	}
+
 	// spend 1 seed
 	seed, err := s.seeds.GetByUserAndFlower(ctx, userID, flowerID)
 	if err != nil {
