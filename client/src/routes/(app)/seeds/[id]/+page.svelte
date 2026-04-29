@@ -31,6 +31,7 @@
 		}
 	}
 
+	// TODO: to lib
 	async function plant() {
 		if (!seed) return;
 		planting = true; error = '';

@@ -22,12 +22,10 @@
 </nav>
 
 <style>
-	/* структурное: прибит снизу */
 	.bottom-nav {
 		position: fixed;
 		bottom: 0;
 		left: 0;
 		right: 0;
-		height: var(--nav-height);
 	}
 </style>

@@ -1,30 +1,55 @@
 <script lang="ts">
-	import { totalFd, needsWatering, type UserFlower } from '$lib/api';
+	import { totalFd, needsWatering, type UserFlower, type Seed, flowers as flowersApi, ApiError } from '$lib/api';
 
 	interface Props {
-		flower: UserFlower;
+		flower?: UserFlower;
+		seed?: Seed;
+		// TODO: enum
 		type: 'flower' | 'seed' | 'herbarium';
 		imagePath?: string;
-		onclick?: () => void;
+		link: string;
+		quantity?: number;
 	}
 
-	let { flower, type, imagePath, onclick }: Props = $props();
+	let planting = $state(false);
+	let error = $state('');
 
-	const fd = $derived(totalFd(flower.day));
-	const watering = $derived(type === 'flower' && needsWatering(flower));
+	let { flower, type, imagePath, link, quantity, seed }: Props = $props();
+
+	const fd = $derived(flower && type === 'flower' && totalFd(flower.day));
+	const floweringDays = $derived(flower && type === 'flower' && flower.day)
+	const watering = $derived(flower && type === 'flower' && needsWatering(flower));
+
+	// TODO: enum
 	const typeLabel = $derived(type === 'seed' ? 'S' : type === 'herbarium' ? 'H' : null);
+
+	// TODO: to lib
+	// TODO: refactor to fetch and a tag??
+	async function plant() {
+		if (!seed) return;
+		planting = true; error = '';
+		try { await flowersApi.plant(seed.flower_id); goto('/home'); }
+		catch (e: unknown) { error = e instanceof ApiError ? e.message : 'Ошибка посадки'; }
+		finally { planting = false; }
+	}
 </script>
 
-<button {onclick} aria-label="цветок" style="width:100%; aspect-ratio:190/288; overflow:hidden; display:flex; flex-direction:column;">
-	<div style="flex:1; position:relative;">
-		{#if imagePath}
-			<img src={imagePath} alt="" style="width:100%; height:100%; object-fit:cover; display:block;" />
-		{/if}
-		{#if typeLabel}<span>{typeLabel}</span>{/if}
-		{#if watering}<span>P</span>{/if}
-	</div>
-	<div>
-		<span>{fd} FD</span>
-		<span>д.{flower.day}</span>
-	</div>
-</button>
+<a href={link}>
+	{#if imagePath}
+		<img src={imagePath} alt="" style="width:100%; height:100%; object-fit:cover; display:block;" />
+	{/if}
+	{#if typeLabel}<span>{type}</span>{/if}
+	{#if watering}<span>полить</span>{/if}
+	{#if fd}<span>{fd} FD</span>{/if}
+	{#if floweringDays}<span>{floweringDays} дней</span>{/if}
+	{#if quantity}<span>{quantity}</span>{/if}
+
+</a>
+
+<!-- TODO: enum -->
+<!-- TODO: to components? -->
+{#if type === 'seed'}
+	<button onclick={plant}>
+		посадить
+	</button>
+{/if}

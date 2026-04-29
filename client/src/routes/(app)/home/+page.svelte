@@ -37,20 +37,6 @@
 		}
 	}
 
-	async function waterHero() {
-		if (!heroFlower) return;
-		wateringId = heroFlower.id;
-		waterError = '';
-		try {
-			await flowersApi.water(heroFlower.id);
-			await loadData();
-		} catch (e: unknown) {
-			waterError = e instanceof ApiError ? e.message : 'Ошибка полива';
-		} finally {
-			wateringId = null;
-		}
-	}
-
 	onMount(loadData);
 </script>
 
@@ -59,66 +45,52 @@
 {:else}
 	<!-- Hero -->
 	<section>
-		<p>@{user?.username}</p>
-		<h1>{user?.fd_balance ?? 0} FD</h1>
-		<p>{liveFlowers.length} живых · {driedFlowers.length} гербарий</p>
-		<a href="/profile">PE редактировать</a>
+		<a href="/profile">@{user?.username}</a>
+		<p>{user?.fd_balance ?? 0} FD</p>
+		<p>{liveFlowers.length} живых цветка</p>
+		<p>{driedFlowers.length} гербарий</p>
 
+		<!-- TODO: merge -->
 		{#if heroTemplate?.image_path}
-			<img src="/{heroTemplate.image_path}" alt="цветок" style="width:100%;" />
+			<img src="/{heroTemplate.image_path}" alt="цветок" />
 		{/if}
 		{#if heroFlower}
-			<p>{heroFd} FD · День {heroFlower.day}</p>
+			<p>{heroFd} FD</p>
+			<p>{heroFlower.day} день</p>
 		{/if}
 
 		{#if waterError}<p>{waterError}</p>{/if}
 
 		{#if heroNeedsWater && heroFlower}
-			<ActionButton variant="confirm" loading={wateringId === heroFlower.id} onclick={waterHero}>
-				P Полить
-			</ActionButton>
+			<button>полить</button>
 		{/if}
 
-		<ActionButton variant="confirm" onclick={() => goto('/seeds')}>
-			Посадить цветок
-		</ActionButton>
+		<!-- TODO: has seeds condition -->
+		<button>посадить цветок</button>
 	</section>
 
-	<!-- Цветки -->
+	<a href="/seeds">семена</a>
+
 	<div class="page">
-		<h2><a href="/seeds">Семена →</a></h2>
+		<!-- TODO: for what? -->
 		{#if liveFlowers.length === 0}
 			<p>начисляются каждые 7 дней с живого цветка</p>
 		{/if}
 
 		{#if liveFlowers.length > 0}
-			<h2>Цветки</h2>
-			<div class="grid">
-				{#each liveFlowers as flower}
-					<FlowerCard {flower} type="flower" imagePath={imgPath(flower)}
-						onclick={() => goto(`/flower/${flower.id}`)} />
-				{/each}
-			</div>
+			<p>цветки</p>
+			{#each liveFlowers as flower}
+				<FlowerCard {flower} type="flower" imagePath={imgPath(flower)} link={`/flower/${flower.id}`}/>
+			{/each}
 		{/if}
 
-		<h2><a href="/herbarium">Гербарий →</a></h2>
+		<a href="/herbarium">гербарий</a>
 		{#if driedFlowers.length === 0}
 			<p>пересохшие цветки появятся здесь</p>
 		{:else}
-			<div class="grid">
-				{#each driedFlowers.slice(0, 4) as flower}
-					<FlowerCard {flower} type="herbarium" imagePath={imgPath(flower)}
-						onclick={() => goto(`/herbarium/${flower.id}`)} />
-				{/each}
-			</div>
+			{#each driedFlowers.slice(0, 4) as flower}
+				<FlowerCard {flower} type="herbarium" imagePath={imgPath(flower)} link={`/herbarium/${flower.id}`} />
+			{/each}
 		{/if}
 	</div>
 {/if}
-
-<style>
-	.grid {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: 8px;
-	}
-</style>

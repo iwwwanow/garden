@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { seeds as seedsApi, flowers as flowersApi, type Seed, type FlowerTemplate } from '$lib/api';
+	import FlowerCard from '$lib/components/FlowerCard.svelte';
 
 	let seedList = $state<Seed[]>([]);
 	let templates = $state<FlowerTemplate[]>([]);
@@ -34,27 +35,8 @@
 	{:else if seedList.length === 0}
 		<p>нет семян — начисляются каждые 7 дней с живого цветка</p>
 	{:else}
-		<div class="grid">
 			{#each seedList as seed}
-				<button onclick={() => goto(`/seeds/${seed.id}`)}
-					style="width:100%; aspect-ratio:190/288; overflow:hidden; display:flex; flex-direction:column;">
-					<div style="flex:1; position:relative;">
-						{#if imgPath(seed)}
-							<img src={imgPath(seed)} alt="" style="width:100%; height:100%; object-fit:cover; display:block;" />
-						{/if}
-						<span>S</span>
-					</div>
-					<div>×{seed.quantity}</div>
-				</button>
+				<FlowerCard flower={seed} type="seed" imagePath={imgPath(seed)} link={`/seeds/${seed.id}`} quantity={seed.quantity}/>
 			{/each}
-		</div>
 	{/if}
 </div>
-
-<style>
-	.grid {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: 8px;
-	}
-</style>

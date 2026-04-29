@@ -1,3 +1,4 @@
+<!-- TODO: for what? -->
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 
