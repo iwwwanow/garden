@@ -1,7 +1,7 @@
 <script lang="ts">
-	import BottomNav from '$lib/components/BottomNav.svelte';
+  import BottomNav from "$lib/components/BottomNav.svelte";
 
-	let { children } = $props();
+  let { children } = $props();
 </script>
 
 {@render children()}

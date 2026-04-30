@@ -1,0 +1,4 @@
+.svelte-kit
+.pnpm-store
+build
+node_modules

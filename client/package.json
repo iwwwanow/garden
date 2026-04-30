@@ -1,25 +1,29 @@
 {
-	"name": "client",
-	"private": true,
-	"version": "0.0.1",
-	"type": "module",
-	"scripts": {
-		"dev": "vite dev",
-		"build": "vite build",
-		"preview": "vite preview",
-		"prepare": "svelte-kit sync || echo ''",
-		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
-		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"
-	},
-	"devDependencies": {
-		"@sveltejs/adapter-node": "5.2.9",
-		"@sveltejs/kit": "2.57.1",
-		"@sveltejs/vite-plugin-svelte": "7.0.0",
-		"@types/node": "22.15.18",
-		"svelte": "5.55.4",
-		"svelte-check": "4.4.6",
-		"typescript": "6.0.3",
-		"vite": "8.0.7"
-	},
-	"packageManager": "pnpm@10.33.2+sha512.a90faf6feeab71ad6c6e57f94e0fe1a12f5dcc22cd754db40ae9593eb6a3e0b6b12e3540218bb37ae083404b1f2ce6db2a4121e979829b4aff94b99f49da1cf8"
+  "name": "client",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "preview": "vite preview",
+    "prepare": "svelte-kit sync || echo ''",
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "@sveltejs/adapter-node": "5.2.9",
+    "@sveltejs/kit": "2.57.1",
+    "@sveltejs/vite-plugin-svelte": "7.0.0",
+    "@types/node": "22.15.18",
+    "prettier": "3.8.3",
+    "prettier-plugin-svelte": "3.5.1",
+    "svelte": "5.55.4",
+    "svelte-check": "4.4.6",
+    "typescript": "6.0.3",
+    "vite": "8.0.7"
+  },
+  "packageManager": "pnpm@10.33.2+sha512.a90faf6feeab71ad6c6e57f94e0fe1a12f5dcc22cd754db40ae9593eb6a3e0b6b12e3540218bb37ae083404b1f2ce6db2a4121e979829b4aff94b99f49da1cf8"
 }
